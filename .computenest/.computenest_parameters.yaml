@@ -1,0 +1,16 @@
+ChartValues:
+  image:
+    tag: nightly
+    repository: compute-nest-registry.cn-hangzhou.cr.aliyuncs.com/1563457855438522/kuberay/operator
+    pullPolicy: IfNotPresent
+HelmChartPath: helm-chart/kuberay-operator
+RuntimeType: Kubernetes
+ServiceType: private
+ArtifactSourceType: HelmChart
+ServiceBuildRegion: ap-southeast-1
+RepoName: mengjunwei-mjw/quickstart-kuberay
+RegionId: cn-hangzhou
+OutputType: HelmNotes
+Owner: mengjunwei-mjw
+Branch: feature/kuberay-operator
+Platform: github
