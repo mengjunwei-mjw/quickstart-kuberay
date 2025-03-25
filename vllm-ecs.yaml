@@ -1,0 +1,436 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  en: 用vllm单机部署大模型
+  zh-cn: Use vllm deploy llm on ecs.
+Conditions:
+  CreateVpcConditions:
+    Fn::Equals:
+      - NewVPC
+      - Ref: VpcOption
+Parameters:
+  VpcOption:
+    Type: String
+    AllowedValues:
+      - NewVPC
+      - ExistingVPC
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        NewVPC:
+          zh-cn: 新建专有网络
+          en: New VPC
+        ExistingVPC:
+          zh-cn: 已有专有网络
+          en: Existing VPC
+    Label:
+      en: Select Existing or New VPC
+      zh-cn: 选择已有/新建的专有网络
+    Required: true
+    Default: NewVPC
+  PayType:
+    Type: String
+    Label:
+      en: ECS Instance Charge Type
+      zh-cn: 付费类型
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+  PayPeriodUnit:
+    Type: String
+    Label:
+      en: Pay Period Unit
+      zh-cn: 购买资源时长周期
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  PayPeriod:
+    Type: Number
+    Label:
+      en: Period
+      zh-cn: 购买资源时长
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  ModelName:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: "Qwen/QwQ-32B"
+    AllowedValues:
+      - Qwen/QwQ-32B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        "Qwen/QwQ-32B": QwQ-32B
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1_7B
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1_32B
+  VLLM_API_KEY:
+    Type: String
+    Label:
+      en: API Key For Model
+      zh-cn: 模型的API Key
+    Description:
+      en: Please set the API key for the model. Length 16~32.
+      zh-cn: 请设置模型服务的API Key, 推荐长度为16~32
+    AllowedPattern: '^[0-9a-zA-Z\\\-_.=*/@#]*$'
+    ConstraintDescription:
+      en: Length 16~32, contain lowercase letters or numbers or special symbols(-_.=*/@#).
+      zh-cn: 请输入小写字母或数字或特殊符号(-_.=*/@#)，推荐长度为16~32。
+  EcsInstanceType:
+    Type: String
+    Label:
+      en: Instance Type
+      zh-cn: 实例类型
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      InstanceChargeType: ${PayType}
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - Qwen/QwQ-32B
+          Value:
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.ebmgn8v.48xlarge
+            - ecs.ebmgn7e.32xlarge
+            - ecs.ebmgn7ex.32xlarge
+            - ecs.ebmgn7i.32xlarge
+            - ecs.ebmgn7ix.32xlarge
+            - ecs.ebmgn7v.32xlarge
+            - ecs.ebmgn7vx.32xlarge
+            - ecs.ebmgn7.32xlarge
+            - ecs.ebmgn6i.24xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+          Value:
+            - ecs.gn7i-c8g1.2xlarge
+            - ecs.gn7i-c16g1.4xlarge
+            - ecs.gn7i-c32g1.8xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c48e.12xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7s-c8g1.2xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.gn7s-c48g1.12xlarge
+            - ecs.gn7s-c16g1.4xlarge
+            - ecs.gn7s-c56g1.14xlarge
+            - ecs.ebmgn8v.48xlarge
+            - ecs.ebmgn7e.32xlarge
+            - ecs.ebmgn7ex.32xlarge
+            - ecs.ebmgn7i.32xlarge
+            - ecs.ebmgn7ix.32xlarge
+            - ecs.ebmgn7v.32xlarge
+            - ecs.ebmgn7vx.32xlarge
+            - ecs.ebmgn7.32xlarge
+            - ecs.ebmgn6i.24xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+          Value:
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.ebmgn8v.48xlarge
+            - ecs.ebmgn7e.32xlarge
+            - ecs.ebmgn7ex.32xlarge
+            - ecs.ebmgn7i.32xlarge
+            - ecs.ebmgn7ix.32xlarge
+            - ecs.ebmgn7v.32xlarge
+            - ecs.ebmgn7vx.32xlarge
+            - ecs.ebmgn7.32xlarge
+            - ecs.ebmgn6i.24xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1-Distill-Qwen-671B
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.ebmgn8v-tdx.48xlarge
+  SystemDiskSize:
+    Type: Number
+    Label:
+      en: System Disk Size(GB)
+      zh-cn: ECS实例系统盘大小(GB)
+    MinValue: 100
+    Default: 200
+  InstancePassword:
+    NoEcho: true
+    Type: String
+    Description:
+      en: Server login password, Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
+      zh-cn: 服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
+    AllowedPattern: '^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$'
+    Label:
+      en: Instance Password
+      zh-cn: 实例密码
+    ConstraintDescription:
+      en: Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
+      zh-cn: 长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
+    MinLength: 8
+    MaxLength: 30
+    AssociationProperty: ALIYUN::ECS::Instance::Password
+  ZoneId:
+    Type: String
+    Label:
+      en: Zone ID
+      zh-cn: 可用区ID
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+  VpcId:
+    Type: String
+    Label:
+      en: VPC ID
+      zh-cn: 专有网络VPC实例ID
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    Default: ''
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+  VSwitchId:
+    Type: String
+    Label:
+      en: VSwitch ID
+      zh-cn: 交换机实例ID
+    Default: ''
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      VpcId: ${VpcId}
+      ZoneId: ${ZoneId}
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+Resources:
+  SecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      SecurityGroupName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+        - PortRange: 80/80
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          NicType: internet
+  InstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      # 付费类型
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Ref: VpcId
+      VSwitchId:
+        Ref: VSwitchId
+      ZoneId:
+        Ref: ZoneId
+      SecurityGroupId:
+        Ref: SecurityGroup
+      ImageId: docker26_gpu
+      Password:
+        Ref: InstancePassword
+      InstanceType:
+        Ref: EcsInstanceType
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Ref: SystemDiskSize
+      InternetMaxBandwidthOut: 100
+      IoOptimized: optimized
+      MaxAmount: 1
+  RunInstallCommand:
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      InstanceIds:
+        Fn::GetAtt:
+          - InstanceGroup
+          - InstanceIds
+      Type: RunShellScript
+      Sync: true
+      Timeout: 10800
+      CommandContent:
+        Fn::Sub:
+          - |
+            # 检查克隆的目录是否已经存在
+            if [ ! -d "/root/llm-model/${ModelName}/.git" ]; then
+              echo "Cloning the repository"
+              if [ "${ModelName}" = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B" ]; then
+                wget '{{ computenest::file::deepseek_r1_7b }}' -O deepseek.tar.gz
+                echo "Downloading the model from the computenest."
+                mkdir -p /root/llm-model/${ModelName}
+                tar -zxvf deepseek.tar.gz --strip-components=1 -C /root/llm-model/${ModelName}/
+                rm -rf deepseek.tar.gz
+              elif [ "${ModelName}" = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B" ]; then
+                wget '{{ computenest::file::deepseek_r1_32b }}' -O deepseek.tar.gz
+                echo "Downloading the model from the computenest."
+                mkdir -p /root/llm-model/${ModelName}
+                tar -zxvf deepseek.tar.gz --strip-components=1 -C /root/llm-model/${ModelName}/
+                rm -rf deepseek.tar.gz
+              elif [ "${ModelName}" = "deepseek-ai/DeepSeek-R1-Distill-Qwen-671B" ]; then
+                wget '{{ computenest::file::deepseek_r1_671b }}' -O deepseek.tar.gz
+                echo "Downloading the model from the computenest."
+                mkdir -p /root/llm-model/${ModelName}
+                tar -zxvf deepseek.tar.gz --strip-components=1 -C /root/llm-model/${ModelName}/
+                rm -rf deepseek.tar.gz
+              elif [ "${ModelName}" = "Qwen/QwQ-32B" ]; then
+                wget '{{ computenest::file::qwq_32b }}' -O qwq.tar.gz
+                echo "Downloading the model from the computenest."
+                mkdir -p /root/llm-model/${ModelName}
+                tar -zxvf qwq.tar.gz --strip-components=1 -C /root/llm-model/${ModelName}/
+                rm -rf qwq.tar.gz
+              else
+                # 考虑将模型文件打包设置为部署物
+                set -ex
+                yum install -y git-lfs
+                git lfs install
+                git clone https://www.modelscope.cn/${ModelName}.git /root/llm-model/${ModelName}
+              fi
+            else
+              echo "Repository already cloned."
+            fi
+            docker pull ac2-registry.cn-hangzhou.cr.aliyuncs.com/ac2/vllm:0.6.6.post1-pytorch2.5.1.6-cuda12.1.1-py310-alinux3.2104
+            docker run -d -t --net=host --gpus all \
+            --privileged \
+            --ipc=host \
+            --name vllm \
+            -v /root:/root \
+            ac2-registry.cn-hangzhou.cr.aliyuncs.com/ac2/vllm:0.6.6.post1-pytorch2.5.1.6-cuda12.1.1-py310-alinux3.2104 \
+            vllm serve /root/llm-model/${ModelName} \
+            --dtype=half --gpu-memory-utilization 0.95 --max-model-len 16384 --enable-chunked-prefill --enforce-eager \
+            --port 8080 --trust-remote-code --api-key "${VLLM_API_KEY}" \
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')
+          - RegionId:
+              Ref: ALIYUN::Region
+            ModelName:
+              Ref: ModelName
+            VLLM_API_KEY:
+              Ref: VLLM_API_KEY
+Outputs:
+  PrivateAPIUserInstructions:
+    Label: 私网Api调用使用说明
+    Description: 私网Api调用使用说明，通过以下命令发送HTTP请求访问推理服务，修改prompt的内容，即可自定义和推理服务交互的内容
+    Value:
+      Fn::Sub:
+        - 'curl -X POST "http://${PrivateIp}:8080/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${VLLM_API_KEY}" --data ''{ "model": "/root/llm-model/${ModelName}",  "messages": [ { "role": "user", "content": "你是谁？" } ] }'''
+        - ModelName:
+            Ref: ModelName
+          PrivateIp:
+            Fn::Select:
+              - '0'
+              - Fn::GetAtt:
+                  - InstanceGroup
+                  - PrivateIps
+          VLLM_API_KEY:
+            Ref: VLLM_API_KEY
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+        Label:
+          default: 付费类型配置
+      - Parameters:
+          - ModelName
+          - VLLM_API_KEY
+          - EcsInstanceType
+          - SystemDiskSize
+          - InstancePassword
+        Label:
+          default: 资源配置
+      - Parameters:
+          - ZoneId
+          - VpcOption
+          - VpcId
+          - VSwitchId
+        Label:
+          default: 可用区配置
