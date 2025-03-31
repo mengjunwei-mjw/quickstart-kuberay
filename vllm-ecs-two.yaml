@@ -1,25 +1,17 @@
 ROSTemplateFormatVersion: '2015-09-01'
 Description:
-  en: 用vllm单机部署大模型
-  zh-cn: Use vllm deploy llm on ecs.
+  en: 用vllm双机部署大模型
+  zh-cn: Use vllm deploy llm on two ecs.
 Mappings:
   ModelMap:
-    Qwen/QwQ-32B:
-      SystemDiskSize: 200
+    deepseek-ai/DeepSeek-R1:
+      SystemDiskSize: 2048
       MaxModelLen: 32768
-      SleepTime: 300
-    deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
-      SystemDiskSize: 300
+      SleepTime: 1000
+    deepseek-ai/DeepSeek-V3-0324:
+      SystemDiskSize: 2048
       MaxModelLen: 32768
-      SleepTime: 600
-    deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
-      SystemDiskSize: 200
-      MaxModelLen: 32768
-      SleepTime: 300
-    deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
-      SystemDiskSize: 80
-      MaxModelLen: 16384
-      SleepTime: 120
+      SleepTime: 1000
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -29,17 +21,13 @@ Conditions:
     Fn::Equals:
       - NewVPC
       - Ref: VpcOption
-  IsQwQ32B:
+  IsDeepSeekR1671B:
     Fn::Equals:
-      - 'Qwen/QwQ-32B'
+      - 'deepseek-ai/DeepSeek-R1'
       - Ref: ModelName
-  IsDeepSeekR170B:
+  IsDeepSeekV3:
     Fn::Equals:
-      - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
-      - Ref: ModelName
-  IsDeepSeekR132B:
-    Fn::Equals:
-      - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      - 'deepseek-ai/DeepSeek-V3-0324'
       - Ref: ModelName
 Parameters:
   PublicAccessOption:
@@ -177,25 +165,21 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "Qwen/QwQ-32B"
+    Default: "deepseek-ai/DeepSeek-R1"
     AllowedValues:
-      - Qwen/QwQ-32B
-      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-      - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      - deepseek-ai/DeepSeek-R1
+      - deepseek-ai/DeepSeek-V3-0324
     AssociationPropertyMetadata:
       ValueLabelMapping:
-        "Qwen/QwQ-32B": QwQ-32B
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1_7B
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1_32B
-        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1_70B
-    Description: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+        "deepseek-ai/DeepSeek-R1": DeepSeek-R1_671B
+        "deepseek-ai/DeepSeek-V3-0324": DeepSeek-V3
+    Description: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
   EcsInstanceType:
     Type: String
     Label:
       en: Instance Type
       zh-cn: 实例类型
-    Description: 如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+    Description: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
@@ -203,105 +187,15 @@ Parameters:
         - Condition:
             Fn::Equals:
               - '${ModelName}'
-              - Qwen/QwQ-32B
+              - deepseek-ai/DeepSeek-R1
           Value:
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
         - Condition:
             Fn::Equals:
               - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+              - deepseek-ai/DeepSeek-V3-0324
           Value:
-            - ecs.gn7i-c8g1.2xlarge
-            - ecs.gn7i-c16g1.4xlarge
-            - ecs.gn7i-c32g1.8xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c32g1.16xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c48e.12xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7s-c8g1.2xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.gn7s-c48g1.12xlarge
-            - ecs.gn7s-c16g1.4xlarge
-            - ecs.gn7s-c56g1.14xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-          Value:
-            - ecs.gn7i-c32g1.16xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
-            Value:
-              - ecs.gn7i-8x.16xlarge
-              - ecs.gn7i-8x.32xlarge
-              - ecs.ebmgn8v.48xlarge
   InstancePassword:
     NoEcho: true
     Type: String
@@ -416,7 +310,7 @@ Resources:
           SourceCidrIp: 0.0.0.0/0
           IpProtocol: tcp
           NicType: internet
-  InstanceGroup:
+  MasterInstanceGroup:
     Type: ALIYUN::ECS::InstanceGroup
     Properties:
       # 付费类型
@@ -442,15 +336,9 @@ Resources:
         Ref: SecurityGroup
       ImageId:
         Fn::If:
-          - IsQwQ32B
-          - qwq_32b
-          - Fn::If:
-              - IsDeepSeekR170B
-              - deepseek_r1_70b
-              - Fn::If:
-                  - IsDeepSeekR132B
-                  - deepseek_r1_32b
-                  - deepseek_r1_7b
+          - IsDeepSeekR1671B
+          - deepseek_r1_671b
+          - deepseek_v3_0324
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -468,15 +356,89 @@ Resources:
           - 0
       IoOptimized: optimized
       MaxAmount: 1
-  RunInstallCommand:
+  WorkerInstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      # 付费类型
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      VSwitchId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVSwitch
+          - Ref: VSwitchId
+      ZoneId:
+        Ref: ZoneId
+      SecurityGroupId:
+        Ref: SecurityGroup
+      ImageId:
+        Fn::If:
+          - IsDeepSeekR1671B
+          - deepseek_r1_671b
+          - deepseek_v3_0324
+      Password:
+        Ref: InstancePassword
+      InstanceType:
+        Ref: EcsInstanceType
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SystemDiskSize
+      InternetMaxBandwidthOut:
+        Fn::If:
+          - PublicAccessConditions
+          - 20
+          - 0
+      IoOptimized: optimized
+      MaxAmount: 1
+  MasterRunInstallCommand:
     DependsOn:
-      - InstanceGroup
+      - MasterInstanceGroup
       - RandomApiKey
     Type: ALIYUN::ECS::RunCommand
     Properties:
       InstanceIds:
         Fn::GetAtt:
-          - InstanceGroup
+          - MasterInstanceGroup
+          - InstanceIds
+      Type: RunShellScript
+      Sync: true
+      Timeout: 3600
+      CommandContent: |
+            docker run -t -d \
+            --name=vllm \
+            --ipc=host \
+            --cap-add=SYS_PTRACE \
+            --network=host \
+            --gpus all \
+            --privileged \
+            --ulimit memlock=-1 \
+            --ulimit stack=67108864 \
+            -v /root:/root \
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+            docker exec -it vllm bash
+            pip3 install ray
+            ray start --head --dashboard-host 0.0.0.0 --port=6379
+  WorkerRunInstallCommand:
+    DependsOn:
+      - WorkerInstanceGroup
+      - MasterRunInstallCommand
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      InstanceIds:
+        Fn::GetAtt:
+          - WorkerInstanceGroup
           - InstanceIds
       Type: RunShellScript
       Sync: true
@@ -484,12 +446,20 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            docker run -d -t --net=host --gpus all \
-            --privileged \
+            docker run -t -d \
+            --name=vllm \
             --ipc=host \
-            --name vllm \
+            --cap-add=SYS_PTRACE \
+            --network=host \
+            --gpus all \
+            --privileged \
+            --ulimit memlock=-1 \
+            --ulimit stack=67108864 \
             -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+            docker exec -it vllm bash
+            pip3 install ray
+            ray start --address=${HEAD_NODE_ADDRESS}:6379
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
             --gpu-memory-utilization 0.98 \
@@ -500,7 +470,8 @@ Resources:
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') 
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
+            --pipeline-parallel-size 2 
             sleep ${SleepTime}
           - ModelName:
               Ref: ModelName
@@ -521,6 +492,12 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - SleepTime
+            HEAD_NODE_ADDRESS:
+              Fn::Select:
+                - '0'
+                - Fn::GetAtt:
+                    - MasterInstanceGroup
+                    - PrivateIps
 Outputs:
   Api_Key:
     NoEcho: true
@@ -541,7 +518,7 @@ Outputs:
             Fn::Select:
               - '0'
               - Fn::GetAtt:
-                  - InstanceGroup
+                  - MasterInstanceGroup
                   - PrivateIps
   公网地址:
     Label: 公网地址
@@ -554,12 +531,12 @@ Outputs:
                 Fn::Select:
                   - '0'
                   - Fn::GetAtt:
-                      - InstanceGroup
+                      - MasterInstanceGroup
                       - PublicIps
         - Fn::Select:
             - '0'
             - Fn::GetAtt:
-                - InstanceGroup
+                - MasterInstanceGroup
                 - PublicIps
   Api调用示例:
     NoEcho: true
@@ -586,7 +563,7 @@ Outputs:
                       Fn::Select:
                         - '0'
                         - Fn::GetAtt:
-                            - InstanceGroup
+                            - MasterInstanceGroup
                             - PublicIps
               - Fn::Sub:
                   - 'http://${Endpoint}:8080/v1'
@@ -594,7 +571,7 @@ Outputs:
                       Fn::Select:
                         - '0'
                         - Fn::GetAtt:
-                            - InstanceGroup
+                            - MasterInstanceGroup
                             - PrivateIps
 Metadata:
   ALIYUN::ROS::Interface:
