@@ -210,6 +210,13 @@ Parameters:
             - ecs.gn7i-4x.16xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.ebmgn8is.32xlarge
+            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7e-c16g1.4xlarge
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
@@ -241,6 +248,18 @@ Parameters:
             - ecs.gn7i-c56g1.14xlarge
             - ecs.gn7i-c48g1.12xlarge
             - ecs.gn7i-c48e.12xlarge
+            - ecs.gn8is.2xlarge
+            - ecs.gn8is.4xlarge
+            - ecs.gn8ia.4xlarge
+            - ecs.gn8ia.8xlarge
+            - ecs.gn8ia.16xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.ebmgn8is.32xlarge
+            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-4x.8xlarge
             - ecs.gn7i-2x.8xlarge
@@ -271,6 +290,18 @@ Parameters:
               - '${ModelName}'
               - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
           Value:
+            - ecs.gn8is.2xlarge
+            - ecs.gn8is.4xlarge
+            - ecs.gn8ia.4xlarge
+            - ecs.gn8ia.8xlarge
+            - ecs.gn8ia.16xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.ebmgn8is.32xlarge
+            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7i-c32g1.16xlarge
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn7i-8x.16xlarge
@@ -299,6 +330,11 @@ Parameters:
               - '${ModelName}'
               - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
             Value:
+              - ecs.gn8is-4x.16xlarge
+              - ecs.gn8ia-4x.64xlarge
+              - ecs.gn8is-8x.32xlarge
+              - ecs.ebmgn8is.32xlarge
+              - ecs.ebmgn8ia.64xlarge
               - ecs.gn7i-8x.16xlarge
               - ecs.gn7i-8x.32xlarge
               - ecs.ebmgn8v.48xlarge
@@ -405,12 +441,6 @@ Resources:
           - Ref: EcsVpc
           - Ref: VpcId
       SecurityGroupIngress:
-        - PortRange: '-1/-1'
-          Priority: 1
-          IpProtocol: all
-          SourceCidrIp:
-            Ref: VpcCidrBlock
-          Description: vpc网络访问开放
         - PortRange: 8080/8080
           Priority: 1
           SourceCidrIp: 0.0.0.0/0
@@ -464,7 +494,7 @@ Resources:
       InternetMaxBandwidthOut:
         Fn::If:
           - PublicAccessConditions
-          - 20
+          - 5
           - 0
       IoOptimized: optimized
       MaxAmount: 1

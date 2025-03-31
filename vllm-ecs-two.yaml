@@ -299,12 +299,6 @@ Resources:
           - Ref: EcsVpc
           - Ref: VpcId
       SecurityGroupIngress:
-        - PortRange: '-1/-1'
-          Priority: 1
-          IpProtocol: all
-          SourceCidrIp:
-            Ref: VpcCidrBlock
-          Description: vpc网络访问开放
         - PortRange: 8080/8080
           Priority: 1
           SourceCidrIp: 0.0.0.0/0
@@ -352,7 +346,7 @@ Resources:
       InternetMaxBandwidthOut:
         Fn::If:
           - PublicAccessConditions
-          - 20
+          - 5
           - 0
       IoOptimized: optimized
       MaxAmount: 1
@@ -416,20 +410,26 @@ Resources:
       Sync: true
       Timeout: 3600
       CommandContent: |
-            docker run -t -d \
-            --name=vllm \
-            --ipc=host \
-            --cap-add=SYS_PTRACE \
-            --network=host \
-            --gpus all \
-            --privileged \
-            --ulimit memlock=-1 \
-            --ulimit stack=67108864 \
-            -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
-            docker exec -it vllm bash
-            pip3 install ray
-            ray start --head --dashboard-host 0.0.0.0 --port=6379
+        yum -y install yum-utils
+        yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
+        yum install -y nvidia-fabric-manager-550.90.07-1
+        systemctl enable nvidia-fabricmanager
+        systemctl start nvidia-fabricmanager
+        echo 'GLOO_SOCKET_IFNAME=eth0' | tee -a /etc/environment > /dev/null
+        source /etc/environment
+        docker run -t -d \
+        --entrypoint /bin/bash \
+        --name=vllm \
+        --ipc=host \
+        --cap-add=SYS_PTRACE \
+        --network=host \
+        --gpus all \
+        --privileged \
+        --ulimit memlock=-1 \
+        --ulimit stack=67108864 \
+        -v /root:/root \
+        egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
+        -c "pip3 install ray && ray start --head --dashboard-host 0.0.0.0 --port=6379 && tail -f /dev/null"
   WorkerRunInstallCommand:
     DependsOn:
       - WorkerInstanceGroup
@@ -446,7 +446,15 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
+            yum -y install yum-utils
+            yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
+            yum install -y nvidia-fabric-manager-550.90.07-1
+            systemctl enable nvidia-fabricmanager
+            systemctl start nvidia-fabricmanager
+            echo 'GLOO_SOCKET_IFNAME=eth0' | tee -a /etc/environment > /dev/null
+            source /etc/environment
             docker run -t -d \
+            --entrypoint /bin/bash \
             --name=vllm \
             --ipc=host \
             --cap-add=SYS_PTRACE \
@@ -456,10 +464,8 @@ Resources:
             --ulimit memlock=-1 \
             --ulimit stack=67108864 \
             -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
-            docker exec -it vllm bash
-            pip3 install ray
-            ray start --address=${HEAD_NODE_ADDRESS}:6379
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
+            -c "pip3 install ray && ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
             --gpu-memory-utilization 0.98 \
@@ -472,7 +478,7 @@ Resources:
             --api-key "${VLLM_API_KEY}" \
             --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
             --pipeline-parallel-size 2 
-            sleep ${SleepTime}
+            sleep ${SleepTime}"
           - ModelName:
               Ref: ModelName
             VLLM_API_KEY:
