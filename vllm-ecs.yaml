@@ -215,8 +215,6 @@ Parameters:
             - ecs.gn8is-4x.16xlarge
             - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
-            - ecs.ebmgn8is.32xlarge
-            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7e-c16g1.4xlarge
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
@@ -225,14 +223,6 @@ Parameters:
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
         - Condition:
             Fn::Equals:
               - '${ModelName}'
@@ -258,8 +248,6 @@ Parameters:
             - ecs.gn8is-4x.16xlarge
             - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
-            - ecs.ebmgn8is.32xlarge
-            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-4x.8xlarge
             - ecs.gn7i-2x.8xlarge
@@ -277,14 +265,6 @@ Parameters:
             - ecs.gn7s-c16g1.4xlarge
             - ecs.gn7s-c56g1.14xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
         - Condition:
             Fn::Equals:
               - '${ModelName}'
@@ -300,8 +280,6 @@ Parameters:
             - ecs.gn8is-4x.16xlarge
             - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
-            - ecs.ebmgn8is.32xlarge
-            - ecs.ebmgn8ia.64xlarge
             - ecs.gn7i-c32g1.16xlarge
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn7i-8x.16xlarge
@@ -317,14 +295,6 @@ Parameters:
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.ebmgn7e.32xlarge
-            - ecs.ebmgn7ex.32xlarge
-            - ecs.ebmgn7i.32xlarge
-            - ecs.ebmgn7ix.32xlarge
-            - ecs.ebmgn7v.32xlarge
-            - ecs.ebmgn7vx.32xlarge
-            - ecs.ebmgn7.32xlarge
-            - ecs.ebmgn6i.24xlarge
         - Condition:
             Fn::Equals:
               - '${ModelName}'
@@ -333,8 +303,6 @@ Parameters:
               - ecs.gn8is-4x.16xlarge
               - ecs.gn8ia-4x.64xlarge
               - ecs.gn8is-8x.32xlarge
-              - ecs.ebmgn8is.32xlarge
-              - ecs.ebmgn8ia.64xlarge
               - ecs.gn7i-8x.16xlarge
               - ecs.gn7i-8x.32xlarge
               - ecs.ebmgn8v.48xlarge
@@ -485,6 +453,7 @@ Resources:
         Ref: InstancePassword
       InstanceType:
         Ref: EcsInstanceType
+      NetworkType: vpc
       SystemDiskCategory: cloud_essd
       SystemDiskSize:
         Fn::FindInMap:
@@ -515,11 +484,14 @@ Resources:
         Fn::Sub:
           - |
             docker run -d -t --net=host --gpus all \
+            --entrypoint /bin/bash \
             --privileged \
             --ipc=host \
             --name vllm \
             -v /root:/root \
             egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
+            -c "export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 &&
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
             --gpu-memory-utilization 0.98 \
@@ -530,7 +502,7 @@ Resources:
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') 
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')"
             sleep ${SleepTime}
           - ModelName:
               Ref: ModelName

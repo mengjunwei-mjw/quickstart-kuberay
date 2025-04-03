@@ -7,11 +7,15 @@ Mappings:
     deepseek-ai/DeepSeek-R1:
       SystemDiskSize: 2048
       MaxModelLen: 32768
-      SleepTime: 1000
-    deepseek-ai/DeepSeek-V3-0324:
+      SleepTime: 900
+    deepseek-ai/DeepSeek-V3:
       SystemDiskSize: 2048
+      MaxModelLen: 12784
+      SleepTime: 900
+    Qwen/QwQ-32B:
+      SystemDiskSize: 200
       MaxModelLen: 32768
-      SleepTime: 1000
+      SleepTime: 300
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -27,7 +31,7 @@ Conditions:
       - Ref: ModelName
   IsDeepSeekV3:
     Fn::Equals:
-      - 'deepseek-ai/DeepSeek-V3-0324'
+      - 'deepseek-ai/DeepSeek-V3'
       - Ref: ModelName
 Parameters:
   PublicAccessOption:
@@ -168,18 +172,18 @@ Parameters:
     Default: "deepseek-ai/DeepSeek-R1"
     AllowedValues:
       - deepseek-ai/DeepSeek-R1
-      - deepseek-ai/DeepSeek-V3-0324
+      - deepseek-ai/DeepSeek-V3
     AssociationPropertyMetadata:
       ValueLabelMapping:
         "deepseek-ai/DeepSeek-R1": DeepSeek-R1_671B
-        "deepseek-ai/DeepSeek-V3-0324": DeepSeek-V3
+        "deepseek-ai/DeepSeek-V3": DeepSeek-V3
     Description: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
   EcsInstanceType:
     Type: String
     Label:
       en: Instance Type
       zh-cn: 实例类型
-    Description: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
+    Description: DeepSeek-R1_671B需要h20实例规格，部署前请提交工单申请h20购买规格。
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
@@ -193,8 +197,31 @@ Parameters:
         - Condition:
             Fn::Equals:
               - '${ModelName}'
-              - deepseek-ai/DeepSeek-V3-0324
+              - deepseek-ai/DeepSeek-V3
           Value:
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - Qwen/QwQ-32B
+          Value:
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.32xlarge
             - ecs.ebmgn8v.48xlarge
   InstancePassword:
     NoEcho: true
@@ -319,20 +346,74 @@ Resources:
           - CreateVpcConditions
           - Ref: EcsVpc
           - Ref: VpcId
-      VSwitchId:
-        Fn::If:
-          - CreateVpcConditions
-          - Ref: EcsVSwitch
-          - Ref: VSwitchId
       ZoneId:
         Ref: ZoneId
-      SecurityGroupId:
-        Ref: SecurityGroup
       ImageId:
         Fn::If:
           - IsDeepSeekR1671B
           - deepseek_r1_671b
-          - deepseek_v3_0324
+          - Fn::If:
+              - IsDeepSeekV3
+              - deepseek_v3
+              - qwq_32b
+      Password:
+        Ref: InstancePassword
+      InstanceType:
+        Ref: EcsInstanceType
+      NetworkType: vpc
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SystemDiskSize
+      InternetMaxBandwidthOut:
+        Fn::If:
+          - PublicAccessConditions
+          - 5
+          - 0
+      IoOptimized: optimized
+      MaxAmount: 1
+      EniMappings:
+        - InstanceType: Primary
+          NetworkInterfaceTrafficMode: HighPerformance
+          SecurityGroupId:
+            Ref: SecurityGroup
+          VSwitchId:
+            Fn::If:
+              - CreateVpcConditions
+              - Ref: EcsVSwitch
+              - Ref: VSwitchId
+          QueueNumber: 2
+        - InstanceType: Secondary
+          NetworkInterfaceTrafficMode: HighPerformance
+          DeleteOnRelease: true
+  WorkerInstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      # 付费类型
+      InstanceChargeType:
+        Ref: PayType
+      NetworkType: vpc
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      ZoneId:
+        Ref: ZoneId
+      ImageId:
+        Fn::If:
+          - IsDeepSeekR1671B
+          - deepseek_r1_671b
+          - Fn::If:
+              - IsDeepSeekV3
+              - deepseek_v3
+              - qwq_32b
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -350,52 +431,20 @@ Resources:
           - 0
       IoOptimized: optimized
       MaxAmount: 1
-  WorkerInstanceGroup:
-    Type: ALIYUN::ECS::InstanceGroup
-    Properties:
-      # 付费类型
-      InstanceChargeType:
-        Ref: PayType
-      PeriodUnit:
-        Ref: PayPeriodUnit
-      Period:
-        Ref: PayPeriod
-      VpcId:
-        Fn::If:
-          - CreateVpcConditions
-          - Ref: EcsVpc
-          - Ref: VpcId
-      VSwitchId:
-        Fn::If:
-          - CreateVpcConditions
-          - Ref: EcsVSwitch
-          - Ref: VSwitchId
-      ZoneId:
-        Ref: ZoneId
-      SecurityGroupId:
-        Ref: SecurityGroup
-      ImageId:
-        Fn::If:
-          - IsDeepSeekR1671B
-          - deepseek_r1_671b
-          - deepseek_v3_0324
-      Password:
-        Ref: InstancePassword
-      InstanceType:
-        Ref: EcsInstanceType
-      SystemDiskCategory: cloud_essd
-      SystemDiskSize:
-        Fn::FindInMap:
-          - ModelMap
-          - Ref: ModelName
-          - SystemDiskSize
-      InternetMaxBandwidthOut:
-        Fn::If:
-          - PublicAccessConditions
-          - 20
-          - 0
-      IoOptimized: optimized
-      MaxAmount: 1
+      EniMappings:
+        - InstanceType: Primary
+          NetworkInterfaceTrafficMode: HighPerformance
+          SecurityGroupId:
+            Ref: SecurityGroup
+          VSwitchId:
+            Fn::If:
+              - CreateVpcConditions
+              - Ref: EcsVSwitch
+              - Ref: VSwitchId
+          QueueNumber: 2
+        - InstanceType: Secondary
+          NetworkInterfaceTrafficMode: HighPerformance
+          DeleteOnRelease: true
   MasterRunInstallCommand:
     DependsOn:
       - MasterInstanceGroup
@@ -409,27 +458,37 @@ Resources:
       Type: RunShellScript
       Sync: true
       Timeout: 3600
-      CommandContent: |
-        yum -y install yum-utils
-        yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
-        yum install -y nvidia-fabric-manager-550.90.07-1
-        systemctl enable nvidia-fabricmanager
-        systemctl start nvidia-fabricmanager
-        echo 'GLOO_SOCKET_IFNAME=eth0' | tee -a /etc/environment > /dev/null
-        source /etc/environment
-        docker run -t -d \
-        --entrypoint /bin/bash \
-        --name=vllm \
-        --ipc=host \
-        --cap-add=SYS_PTRACE \
-        --network=host \
-        --gpus all \
-        --privileged \
-        --ulimit memlock=-1 \
-        --ulimit stack=67108864 \
-        -v /root:/root \
-        egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
-        -c "pip3 install ray && ray start --head --dashboard-host 0.0.0.0 --port=6379 && tail -f /dev/null"
+      CommandContent:
+        Fn::Sub:
+          - |
+            docker run -t -d \
+            --entrypoint /bin/bash \
+            --name=vllm \
+            --ipc=host \
+            --cap-add=SYS_PTRACE \
+            --network=host \
+            --gpus all \
+            --privileged \
+            --ulimit memlock=-1 \
+            --ulimit stack=67108864 \
+            -v /root:/root \
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
+            -c "pip3 install ray &&
+            export NCCL_IB_DISABLE=0 &&
+            export NCCL_DEBUG=INFO &&
+            export NCCL_NET_GDR_LEVEL=5 &&
+            export NCCL_P2P_LEVEL=5 &&
+            export NCCL_IB_GID_INDEX=1 &&
+            export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 && 
+            ray start --head --dashboard-host 0.0.0.0 --port=6379 && 
+            tail -f /dev/null"
+          - HEAD_NODE_ADDRESS:
+              Fn::Select:
+                - '0'
+                - Fn::GetAtt:
+                    - MasterInstanceGroup
+                    - PrivateIps
   WorkerRunInstallCommand:
     DependsOn:
       - WorkerInstanceGroup
@@ -446,13 +505,6 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            yum -y install yum-utils
-            yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
-            yum install -y nvidia-fabric-manager-550.90.07-1
-            systemctl enable nvidia-fabricmanager
-            systemctl start nvidia-fabricmanager
-            echo 'GLOO_SOCKET_IFNAME=eth0' | tee -a /etc/environment > /dev/null
-            source /etc/environment
             docker run -t -d \
             --entrypoint /bin/bash \
             --name=vllm \
@@ -464,8 +516,16 @@ Resources:
             --ulimit memlock=-1 \
             --ulimit stack=67108864 \
             -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
-            -c "pip3 install ray && ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
+            -c "pip3 install ray && 
+            export NCCL_IB_DISABLE=0 &&
+            export NCCL_DEBUG=INFO &&
+            export NCCL_NET_GDR_LEVEL=5 &&
+            export NCCL_P2P_LEVEL=5 &&
+            export NCCL_IB_GID_INDEX=1 &&
+            export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 && 
+            ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
             --gpu-memory-utilization 0.98 \
@@ -477,8 +537,8 @@ Resources:
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
             --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
-            --pipeline-parallel-size 2 
-            sleep ${SleepTime}"
+            --pipeline-parallel-size 2"
+            sleep ${SleepTime}
           - ModelName:
               Ref: ModelName
             VLLM_API_KEY:
@@ -524,7 +584,7 @@ Outputs:
             Fn::Select:
               - '0'
               - Fn::GetAtt:
-                  - MasterInstanceGroup
+                  - WorkerInstanceGroup
                   - PrivateIps
   公网地址:
     Label: 公网地址
@@ -537,12 +597,12 @@ Outputs:
                 Fn::Select:
                   - '0'
                   - Fn::GetAtt:
-                      - MasterInstanceGroup
+                      - WorkerInstanceGroup
                       - PublicIps
         - Fn::Select:
             - '0'
             - Fn::GetAtt:
-                - MasterInstanceGroup
+                - WorkerInstanceGroup
                 - PublicIps
   Api调用示例:
     NoEcho: true
@@ -569,7 +629,7 @@ Outputs:
                       Fn::Select:
                         - '0'
                         - Fn::GetAtt:
-                            - MasterInstanceGroup
+                            - WorkerInstanceGroup
                             - PublicIps
               - Fn::Sub:
                   - 'http://${Endpoint}:8080/v1'
@@ -577,7 +637,7 @@ Outputs:
                       Fn::Select:
                         - '0'
                         - Fn::GetAtt:
-                            - MasterInstanceGroup
+                            - WorkerInstanceGroup
                             - PrivateIps
 Metadata:
   ALIYUN::ROS::Interface:
