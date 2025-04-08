@@ -183,7 +183,7 @@ Parameters:
     Label:
       en: Instance Type
       zh-cn: 实例类型
-    Description: DeepSeek-R1_671B需要h20实例规格，部署前请提交工单申请h20购买规格。
+    Description: DeepSeek-R1_671B和DeepSeek-V3需要h20实例规格，部署前请提交工单申请h20购买规格。
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
