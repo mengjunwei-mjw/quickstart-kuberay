@@ -7,19 +7,18 @@ Mappings:
     Qwen/QwQ-32B:
       SystemDiskSize: 200
       MaxModelLen: 32768
-      SleepTime: 300
+    Qwen/Qwen2.5-32B-Instruct:
+      SystemDiskSize: 200
+      MaxModelLen: 32768
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
       SystemDiskSize: 300
       MaxModelLen: 32768
-      SleepTime: 600
     deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
       SystemDiskSize: 200
       MaxModelLen: 32768
-      SleepTime: 300
     deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
       SystemDiskSize: 80
       MaxModelLen: 16384
-      SleepTime: 120
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -32,6 +31,10 @@ Conditions:
   IsQwQ32B:
     Fn::Equals:
       - 'Qwen/QwQ-32B'
+      - Ref: ModelName
+  IsQwen32B:
+    Fn::Equals:
+      - 'Qwen/Qwen2.5-32B-Instruct'
       - Ref: ModelName
   IsDeepSeekR170B:
     Fn::Equals:
@@ -180,12 +183,14 @@ Parameters:
     Default: "Qwen/QwQ-32B"
     AllowedValues:
       - Qwen/QwQ-32B
+      - Qwen/Qwen2.5-32B-Instruct
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
       - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
     AssociationPropertyMetadata:
       ValueLabelMapping:
         "Qwen/QwQ-32B": QwQ-32B
+        "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1_7B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1_32B
         "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1_70B
@@ -204,6 +209,29 @@ Parameters:
             Fn::Equals:
               - '${ModelName}'
               - Qwen/QwQ-32B
+          Value:
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - Qwen/Qwen2.5-32B-Instruct
           Value:
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn7i-4x.8xlarge
@@ -299,13 +327,13 @@ Parameters:
             Fn::Equals:
               - '${ModelName}'
               - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
-            Value:
-              - ecs.gn8is-4x.16xlarge
-              - ecs.gn8ia-4x.64xlarge
-              - ecs.gn8is-8x.32xlarge
-              - ecs.gn7i-8x.16xlarge
-              - ecs.gn7i-8x.32xlarge
-              - ecs.ebmgn8v.48xlarge
+          Value:
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.ebmgn8v.48xlarge
   InstancePassword:
     NoEcho: true
     Type: String
@@ -443,12 +471,15 @@ Resources:
           - IsQwQ32B
           - qwq_32b
           - Fn::If:
-              - IsDeepSeekR170B
-              - deepseek_r1_70b
+              - IsQwen32B
+              - qwen_2_5_32b
               - Fn::If:
-                  - IsDeepSeekR132B
-                  - deepseek_r1_32b
-                  - deepseek_r1_7b
+                  - IsDeepSeekR170B
+                  - deepseek_r1_70b
+                  - Fn::If:
+                      - IsDeepSeekR132B
+                      - deepseek_r1_32b
+                      - deepseek_r1_7b
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -497,13 +528,26 @@ Resources:
             --gpu-memory-utilization 0.98 \
             --max-model-len ${MaxModelLen} \
             --enable-chunked-prefill \
-            --enforce-eager \
             --host=0.0.0.0 \
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
             --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')"
-            sleep ${SleepTime}
+
+            MAX_TIMEOUT=1800
+            INTERVAL=10
+            MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
+
+            for ((i=1; i<=MAX_ATTEMPTS; i++))
+            do
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 10)
+                if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                then
+                    exit 0
+                else
+                    sleep $INTERVAL
+                fi
+            done
           - ModelName:
               Ref: ModelName
             VLLM_API_KEY:
@@ -518,11 +562,6 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - MaxModelLen
-            SleepTime:
-              Fn::FindInMap:
-                - ModelMap
-                - Ref: ModelName
-                - SleepTime
 Outputs:
   Api_Key:
     NoEcho: true
