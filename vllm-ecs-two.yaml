@@ -7,15 +7,9 @@ Mappings:
     deepseek-ai/DeepSeek-R1:
       SystemDiskSize: 2048
       MaxModelLen: 32768
-      SleepTime: 1800
     deepseek-ai/DeepSeek-V3:
       SystemDiskSize: 2048
       MaxModelLen: 12784
-      SleepTime: 1800
-    Qwen/QwQ-32B:
-      SystemDiskSize: 200
-      MaxModelLen: 32768
-      SleepTime: 300
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -200,29 +194,6 @@ Parameters:
               - deepseek-ai/DeepSeek-V3
           Value:
             - ecs.ebmgn8v.48xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - Qwen/QwQ-32B
-          Value:
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.ebmgn8v.48xlarge
   InstancePassword:
     NoEcho: true
     Type: String
@@ -352,10 +323,7 @@ Resources:
         Fn::If:
           - IsDeepSeekR1671B
           - deepseek_r1_671b
-          - Fn::If:
-              - IsDeepSeekV3
-              - deepseek_v3
-              - qwq_32b
+          - deepseek_v3
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -410,10 +378,7 @@ Resources:
         Fn::If:
           - IsDeepSeekR1671B
           - deepseek_r1_671b
-          - Fn::If:
-              - IsDeepSeekV3
-              - deepseek_v3
-              - qwq_32b
+          - deepseek_v3
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -537,7 +502,21 @@ Resources:
             --api-key "${VLLM_API_KEY}" \
             --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
             --pipeline-parallel-size 2"
-            sleep ${SleepTime}
+            
+            MAX_TIMEOUT=3000
+            INTERVAL=10
+            MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
+
+            for ((i=1; i<=MAX_ATTEMPTS; i++))
+            do
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 10)
+                if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                then
+                    exit 0
+                else
+                    sleep $INTERVAL
+                fi
+            done
           - ModelName:
               Ref: ModelName
             VLLM_API_KEY:
@@ -552,11 +531,6 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - MaxModelLen
-            SleepTime:
-              Fn::FindInMap:
-                - ModelMap
-                - Ref: ModelName
-                - SleepTime
             HEAD_NODE_ADDRESS:
               Fn::Select:
                 - '0'
