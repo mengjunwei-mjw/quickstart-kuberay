@@ -616,7 +616,7 @@ Outputs:
     Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
     Value:
       Fn::Sub:
-        - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "你是谁？" } ] }'''
+        - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
         - ModelName:
             Ref: ModelName
           API_KEY:
