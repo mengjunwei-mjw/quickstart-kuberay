@@ -194,13 +194,17 @@ Parameters:
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1_7B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1_32B
         "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1_70B
-    Description: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+    Description:
+      zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+      en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
   EcsInstanceType:
     Type: String
     Label:
       en: Instance Type
       zh-cn: 实例类型
-    Description: 如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+    Description:
+      zh-cn: 如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+      en: If the instance specifications in the current region are insufficient or no specifications are available for purchase, please switch to larger regions such as Japan and the United States to view.
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
