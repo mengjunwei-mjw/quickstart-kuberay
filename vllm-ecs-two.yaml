@@ -1,7 +1,7 @@
 ROSTemplateFormatVersion: '2015-09-01'
 Description:
-  en: 用vllm双机部署大模型
-  zh-cn: Use vllm deploy llm on two ecs.
+  en: Use vllm deploy llm on two ecs.
+  zh-cn: 用vllm双机部署大模型
 Mappings:
   ModelMap:
     deepseek-ai/DeepSeek-R1:
@@ -305,7 +305,11 @@ Resources:
   MasterInstanceGroup:
     Type: ALIYUN::ECS::InstanceGroup
     Properties:
-      # 付费类型
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - 'master'
       InstanceChargeType:
         Ref: PayType
       PeriodUnit:
@@ -359,7 +363,11 @@ Resources:
   WorkerInstanceGroup:
     Type: ALIYUN::ECS::InstanceGroup
     Properties:
-      # 付费类型
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - 'worker'
       InstanceChargeType:
         Ref: PayType
       NetworkType: vpc
@@ -620,13 +628,15 @@ Metadata:
           - PayPeriodUnit
           - PayPeriod
         Label:
-          default: 付费类型配置
+          zh-cn: 付费类型配置
+          en: Payment Type Configuration
       - Parameters:
           - ModelName
           - EcsInstanceType
           - InstancePassword
         Label:
-          default: 资源配置
+          zh-cn: 资源配置
+          en: Resource Configuration
       - Parameters:
           - ZoneId
           - VpcOption
@@ -636,4 +646,5 @@ Metadata:
           - VSwitchCidrBlock
           - PublicAccessOption
         Label:
-          default: 可用区配置
+          zh-cn: 可用区配置
+          en: Availability Zone Configuration
