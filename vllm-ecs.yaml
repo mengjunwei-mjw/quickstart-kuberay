@@ -6,19 +6,39 @@ Mappings:
   ModelMap:
     Qwen/QwQ-32B:
       SystemDiskSize: 200
-      MaxModelLen: 32768
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
     Qwen/Qwen2.5-32B-Instruct:
       SystemDiskSize: 200
-      MaxModelLen: 32768
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
+    Qwen/Qwen3-32B:
+      SystemDiskSize: 300
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+    Qwen/Qwen3-235B-A22B:
+      SystemDiskSize: 1500
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
       SystemDiskSize: 300
-      MaxModelLen: 32768
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
     deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
       SystemDiskSize: 200
-      MaxModelLen: 32768
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
     deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
       SystemDiskSize: 80
-      MaxModelLen: 16384
+      MaxModelLen: 8192
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -28,22 +48,74 @@ Conditions:
     Fn::Equals:
       - NewVPC
       - Ref: VpcOption
+  VllmVersionConditions:
+    Fn::Equals:
+      - 0.7.2
+      - Fn::FindInMap:
+          - ModelMap
+          - Fn::If:
+              - IsQwenModel
+              - Ref: ModelNameQwen
+              - Ref: ModelNameDeepseek
+          - VllmVersion
+  IsQwen3:
+    Fn::And:
+      - Fn::Equals:
+          - 'Qwen'
+          - Ref: ModelType
+      - Fn::Or:
+          - Fn::Equals:
+              - 'Qwen/Qwen3-32B'
+              - Ref: ModelNameQwen
+          - Fn::Equals:
+              - 'Qwen/Qwen3-235B-A22B'
+              - Ref: ModelNameQwen
+  IsQwenModel:
+    Fn::Equals:
+      - 'Qwen'
+      - Ref: ModelType
   IsQwQ32B:
     Fn::Equals:
       - 'Qwen/QwQ-32B'
-      - Ref: ModelName
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
   IsQwen32B:
     Fn::Equals:
       - 'Qwen/Qwen2.5-32B-Instruct'
-      - Ref: ModelName
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-32B:
+    Fn::Equals:
+      - 'Qwen/Qwen3-32B'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-235B-A22B:
+    Fn::Equals:
+      - 'Qwen/Qwen3-235B-A22B'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
   IsDeepSeekR170B:
     Fn::Equals:
       - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
-      - Ref: ModelName
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
   IsDeepSeekR132B:
     Fn::Equals:
       - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
-      - Ref: ModelName
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
 Parameters:
   PublicAccessOption:
     Type: String
@@ -175,25 +247,60 @@ Parameters:
             Fn::Equals:
               - ${PayType}
               - PostPaid
-  ModelName:
+  ModelType:
+    Type: String
+    Label:
+      en: Model Type
+      zh-cn: 模型系列
+    Default: "Qwen"
+    AllowedValues:
+      - Qwen
+      - Deepseek
+  ModelNameQwen:
     Type: String
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "Qwen/QwQ-32B"
+    Default: "Qwen/Qwen3-32B"
     AllowedValues:
+      - Qwen/Qwen3-235B-A22B
+      - Qwen/Qwen3-32B
       - Qwen/QwQ-32B
       - Qwen/Qwen2.5-32B-Instruct
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
+        "Qwen/Qwen3-32B": Qwen3-32B
+        "Qwen/QwQ-32B": QwQ-32B
+        "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${ModelType}
+            - Qwen
+    Description:
+      zh-cn: Qwen3-235B-A22B模型需要h20实例规格，部署前请提交工单申请h20购买规格。
+      en: Qwen3-235B-A22B models need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
+  ModelNameDeepseek:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    AllowedValues:
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
       - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
     AssociationPropertyMetadata:
       ValueLabelMapping:
-        "Qwen/QwQ-32B": QwQ-32B
-        "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1_7B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1_32B
         "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1_70B
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${ModelType}
+            - Deepseek
     Description:
       zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
       en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
@@ -208,12 +315,31 @@ Parameters:
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
+      ZoneId: ${ZoneId}
       AllowedValues:
         - Condition:
             Fn::Equals:
-              - '${ModelName}'
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-32B
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-235B-A22B
+          Value:
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
               - Qwen/QwQ-32B
           Value:
+            - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn7i-4x.8xlarge
             - ecs.gn7i-4x.16xlarge
@@ -231,12 +357,12 @@ Parameters:
             - ecs.gn7s-c32g1.8xlarge
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
-            - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelName}'
+              - '${ModelNameQwen}'
               - Qwen/Qwen2.5-32B-Instruct
           Value:
+            - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn7i-4x.8xlarge
             - ecs.gn7i-4x.16xlarge
@@ -254,10 +380,9 @@ Parameters:
             - ecs.gn7s-c32g1.8xlarge
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
-            - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelName}'
+              - '${ModelNameDeepseek}'
               - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
           Value:
             - ecs.gn7i-c8g1.2xlarge
@@ -299,9 +424,10 @@ Parameters:
             - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelName}'
+              - '${ModelNameDeepseek}'
               - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
           Value:
+            - ecs.ebmgn8v.48xlarge
             - ecs.gn8is.2xlarge
             - ecs.gn8is.4xlarge
             - ecs.gn8ia.4xlarge
@@ -326,18 +452,17 @@ Parameters:
             - ecs.gn7s-c32g1.8xlarge
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
-            - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelName}'
+              - '${ModelNameDeepseek}'
               - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
           Value:
+            - ecs.ebmgn8v.48xlarge
             - ecs.gn8is-4x.16xlarge
             - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-8x.32xlarge
-            - ecs.ebmgn8v.48xlarge
   InstancePassword:
     NoEcho: true
     Type: String
@@ -476,18 +601,24 @@ Resources:
         Ref: SecurityGroup
       ImageId:
         Fn::If:
-          - IsQwQ32B
-          - qwq_32b
+          - IsQwen3-32B
+          - qwen3_32b
           - Fn::If:
-              - IsQwen32B
-              - qwen_2_5_32b
+              - IsQwen3-235B-A22B
+              - qwen3_235b_a22b
               - Fn::If:
-                  - IsDeepSeekR170B
-                  - deepseek_r1_70b
+                  - IsQwQ32B
+                  - qwq_32b
                   - Fn::If:
-                      - IsDeepSeekR132B
-                      - deepseek_r1_32b
-                      - deepseek_r1_7b
+                      - IsQwen32B
+                      - qwen_2_5_32b
+                      - Fn::If:
+                          - IsDeepSeekR170B
+                          - deepseek_r1_70b
+                          - Fn::If:
+                              - IsDeepSeekR132B
+                              - deepseek_r1_32b
+                              - deepseek_r1_7b
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -497,7 +628,10 @@ Resources:
       SystemDiskSize:
         Fn::FindInMap:
           - ModelMap
-          - Ref: ModelName
+          - Fn::If:
+              - IsQwenModel
+              - Ref: ModelNameQwen
+              - Ref: ModelNameDeepseek
           - SystemDiskSize
       InternetMaxBandwidthOut:
         Fn::If:
@@ -529,18 +663,18 @@ Resources:
             --name vllm \
             -v /root:/root \
             egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04 \
-            -c "export GLOO_SOCKET_IFNAME=eth0 && 
+            -c "${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
             export NCCL_SOCKET_IFNAME=eth0 &&
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
-            --gpu-memory-utilization 0.98 \
+            --gpu-memory-utilization ${GpuMemory} \
             --max-model-len ${MaxModelLen} \
             --enable-chunked-prefill \
             --host=0.0.0.0 \
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')"
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Parameters}"
 
             MAX_TIMEOUT=1800
             INTERVAL=10
@@ -557,7 +691,10 @@ Resources:
                 fi
             done
           - ModelName:
-              Ref: ModelName
+              Fn::If:
+                - IsQwenModel
+                - Ref: ModelNameQwen
+                - Ref: ModelNameDeepseek
             VLLM_API_KEY:
               Fn::Join:
                 - '-'
@@ -568,9 +705,48 @@ Resources:
             MaxModelLen:
               Fn::FindInMap:
                 - ModelMap
-                - Ref: ModelName
+                - Fn::If:
+                    - IsQwenModel
+                    - Ref: ModelNameQwen
+                    - Ref: ModelNameDeepseek
                 - MaxModelLen
+            InstallVllm:
+              Fn::If:
+                - VllmVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade vllm==${VllmVersion} && '
+                    - VllmVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Fn::If:
+                              - IsQwenModel
+                              - Ref: ModelNameQwen
+                              - Ref: ModelNameDeepseek
+                          - VllmVersion
+            GpuMemory:
+              Fn::FindInMap:
+                - ModelMap
+                - Fn::If:
+                    - IsQwenModel
+                    - Ref: ModelNameQwen
+                    - Ref: ModelNameDeepseek
+                - GpuMemory
+            Parameters:
+              Fn::If:
+                - IsQwen3
+                - ' --enable-reasoning --reasoning-parser deepseek_r1'
+                - ''
 Outputs:
+  模型名称:
+    Label:
+      zh-ch: 模型名称
+      en: Model Name
+    Value:
+      Fn::If:
+        - IsQwenModel
+        - Ref: ModelNameQwen
+        - Ref: ModelNameDeepseek
   Api_Key:
     NoEcho: true
     Label: API Key
@@ -582,7 +758,9 @@ Outputs:
               - RandomApiKey
               - value
   内网地址:
-    Label: 内网地址
+    Label:
+      zh-ch: 内网地址
+      en: Internal Address
     Value:
       Fn::Sub:
         - 'http://${Endpoint}:8080/v1'
@@ -593,7 +771,9 @@ Outputs:
                   - InstanceGroup
                   - PrivateIps
   公网地址:
-    Label: 公网地址
+    Label:
+      zh-ch: 公网地址
+      en: Public address
     Value:
       Fn::If:
         - PublicAccessConditions
@@ -612,13 +792,18 @@ Outputs:
                 - PublicIps
   Api调用示例:
     NoEcho: true
-    Label: Api调用示例
+    Label:
+      zh-ch: Api调用示例
+      en: Api call example
     Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
     Value:
       Fn::Sub:
         - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
         - ModelName:
-            Ref: ModelName
+            Fn::If:
+              - IsQwenModel
+              - Ref: ModelNameQwen
+              - Ref: ModelNameDeepseek
           API_KEY:
             Fn::Join:
               - '-'
@@ -656,7 +841,9 @@ Metadata:
           zh-cn: 付费类型配置
           en: Payment Type Configuration
       - Parameters:
-          - ModelName
+          - ModelType
+          - ModelNameQwen
+          - ModelNameDeepseek
           - EcsInstanceType
           - InstancePassword
         Label:

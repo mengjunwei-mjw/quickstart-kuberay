@@ -185,6 +185,7 @@ Parameters:
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
+      ZoneId: ${ZoneId}
       AllowedValues:
         - Condition:
             Fn::Equals:
@@ -550,6 +551,12 @@ Resources:
                     - MasterInstanceGroup
                     - PrivateIps
 Outputs:
+  模型名称:
+    Label:
+      zh-ch: 模型名称
+      en: Model Name
+    Value:
+      Ref: ModelName
   Api_Key:
     NoEcho: true
     Label: API Key
@@ -561,7 +568,9 @@ Outputs:
               - RandomApiKey
               - value
   内网地址:
-    Label: 内网地址
+    Label:
+      zh-ch: 内网地址
+      en: Internal Address
     Value:
       Fn::Sub:
         - 'http://${Endpoint}:8080/v1'
@@ -572,7 +581,9 @@ Outputs:
                   - WorkerInstanceGroup
                   - PrivateIps
   公网地址:
-    Label: 公网地址
+    Label:
+      zh-ch: 公网地址
+      en: Public Address
     Value:
       Fn::If:
         - PublicAccessConditions
@@ -591,7 +602,9 @@ Outputs:
                 - PublicIps
   Api调用示例:
     NoEcho: true
-    Label: Api调用示例
+    Label:
+      zh-ch: Api调用示例
+      en: Api Call Example
     Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
     Value:
       Fn::Sub:
