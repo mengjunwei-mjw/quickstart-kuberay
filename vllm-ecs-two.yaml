@@ -522,7 +522,7 @@ Resources:
 
             for ((i=1; i<=MAX_ATTEMPTS; i++))
             do
-                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 10)
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 20)
                 if echo "$LATEST_LOG" | grep -q "Application startup complete."
                 then
                     exit 0
