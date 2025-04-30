@@ -24,6 +24,11 @@ Mappings:
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
+    Qwen/Qwen3-8B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
       SystemDiskSize: 300
       MaxModelLen: 16384
@@ -70,6 +75,9 @@ Conditions:
           - Fn::Equals:
               - 'Qwen/Qwen3-235B-A22B'
               - Ref: ModelNameQwen
+          - Fn::Equals:
+              - 'Qwen/Qwen3-8B'
+              - Ref: ModelNameQwen
   IsQwenModel:
     Fn::Equals:
       - 'Qwen'
@@ -98,6 +106,13 @@ Conditions:
   IsQwen3-235B-A22B:
     Fn::Equals:
       - 'Qwen/Qwen3-235B-A22B'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-8B:
+    Fn::Equals:
+      - 'Qwen/Qwen3-8B'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
@@ -265,12 +280,14 @@ Parameters:
     AllowedValues:
       - Qwen/Qwen3-235B-A22B
       - Qwen/Qwen3-32B
+      - Qwen/Qwen3-8B
       - Qwen/QwQ-32B
       - Qwen/Qwen2.5-32B-Instruct
     AssociationPropertyMetadata:
       ValueLabelMapping:
         "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
         "Qwen/Qwen3-32B": Qwen3-32B
+        "Qwen/Qwen3-8B": Qwen3-8B
         "Qwen/QwQ-32B": QwQ-32B
         "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
       Visible:
@@ -334,6 +351,47 @@ Parameters:
               - Qwen/Qwen3-235B-A22B
           Value:
             - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-8B
+          Value:
+            - ecs.gn7i-c8g1.2xlarge
+            - ecs.gn7i-c16g1.4xlarge
+            - ecs.gn7i-c32g1.8xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c48e.12xlarge
+            - ecs.gn8is.2xlarge
+            - ecs.gn8is.4xlarge
+            - ecs.gn8ia.4xlarge
+            - ecs.gn8ia.8xlarge
+            - ecs.gn8ia.16xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7s-c8g1.2xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.gn7s-c48g1.12xlarge
+            - ecs.gn7s-c16g1.4xlarge
+            - ecs.gn7s-c56g1.14xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameQwen}'
@@ -421,7 +479,6 @@ Parameters:
             - ecs.gn7s-c48g1.12xlarge
             - ecs.gn7s-c16g1.4xlarge
             - ecs.gn7s-c56g1.14xlarge
-            - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameDeepseek}'
@@ -618,7 +675,10 @@ Resources:
                           - Fn::If:
                               - IsDeepSeekR132B
                               - deepseek_r1_32b
-                              - deepseek_r1_7b
+                              - Fn::If:
+                                  - IsQwen3-8B
+                                  - qwen3_8b
+                                  - deepseek_r1_7b
       Password:
         Ref: InstancePassword
       InstanceType:
