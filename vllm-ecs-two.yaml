@@ -600,7 +600,7 @@ Outputs:
             - Fn::GetAtt:
                 - WorkerInstanceGroup
                 - PublicIps
-  AppFlow:
+  在钉钉或微信对话您的大模型:
     Label:
       zh-ch: 在钉钉或微信对话您的大模型
       en: Chat with your LLM in DingTalk or WeChat
