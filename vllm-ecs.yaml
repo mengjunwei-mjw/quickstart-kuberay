@@ -261,7 +261,7 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "Qwen/Qwen3-32B"
+    Default: "Qwen/Qwen3-235B-A22B"
     AllowedValues:
       - Qwen/Qwen3-235B-A22B
       - Qwen/Qwen3-32B
@@ -790,6 +790,11 @@ Outputs:
             - Fn::GetAtt:
                 - InstanceGroup
                 - PublicIps
+  AppFlow:
+    Label:
+      zh-ch: 在钉钉或微信对话您的大模型
+      en: Chat with your LLM in DingTalk or WeChat
+  Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/flow/fastTemplate/collection/tl-c3597861185a4053b207
   Api调用示例:
     NoEcho: true
     Label:
