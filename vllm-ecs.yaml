@@ -19,8 +19,28 @@ Mappings:
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.85
+    Qwen/Qwen3-32B-FP8:
+      SystemDiskSize: 150
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+    Qwen/Qwen3-30B-A3B:
+      SystemDiskSize: 200
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+    Qwen/Qwen3-30B-A3B-FP8:
+      SystemDiskSize: 150
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
     Qwen/Qwen3-235B-A22B:
-      SystemDiskSize: 1500
+      SystemDiskSize: 800
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+    Qwen/Qwen3-235B-A22B-FP8:
+      SystemDiskSize: 550
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
@@ -73,7 +93,19 @@ Conditions:
               - 'Qwen/Qwen3-32B'
               - Ref: ModelNameQwen
           - Fn::Equals:
+              - 'Qwen/Qwen3-32B-FP8'
+              - Ref: ModelNameQwen
+          - Fn::Equals:
+              - 'Qwen/Qwen3-30B-A3B'
+              - Ref: ModelNameQwen
+          - Fn::Equals:
+              - 'Qwen/Qwen3-30B-A3B-FP8'
+              - Ref: ModelNameQwen
+          - Fn::Equals:
               - 'Qwen/Qwen3-235B-A22B'
+              - Ref: ModelNameQwen
+          - Fn::Equals:
+              - 'Qwen/Qwen3-235B-A22B-FP8'
               - Ref: ModelNameQwen
           - Fn::Equals:
               - 'Qwen/Qwen3-8B'
@@ -103,9 +135,37 @@ Conditions:
           - IsQwenModel
           - Ref: ModelNameQwen
           - Ref: ModelNameDeepseek
+  IsQwen3-32B-FP8:
+    Fn::Equals:
+      - 'Qwen/Qwen3-32B-FP8'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-30B-A3B:
+    Fn::Equals:
+      - 'Qwen/Qwen3-30B-A3B'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-30B-A3B-FP8:
+    Fn::Equals:
+      - 'Qwen/Qwen3-30B-A3B-FP8'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
   IsQwen3-235B-A22B:
     Fn::Equals:
       - 'Qwen/Qwen3-235B-A22B'
+      - Fn::If:
+          - IsQwenModel
+          - Ref: ModelNameQwen
+          - Ref: ModelNameDeepseek
+  IsQwen3-235B-A22B-FP8:
+    Fn::Equals:
+      - 'Qwen/Qwen3-235B-A22B-FP8'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
@@ -276,16 +336,24 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "Qwen/Qwen3-235B-A22B"
+    Default: "Qwen/Qwen3-30B-A3B-FP8"
     AllowedValues:
+      - Qwen/Qwen3-30B-A3B-FP8
+      - Qwen/Qwen3-30B-A3B
+      - Qwen/Qwen3-235B-A22B-FP8
       - Qwen/Qwen3-235B-A22B
+      - Qwen/Qwen3-32B-FP8
       - Qwen/Qwen3-32B
       - Qwen/Qwen3-8B
       - Qwen/QwQ-32B
       - Qwen/Qwen2.5-32B-Instruct
     AssociationPropertyMetadata:
       ValueLabelMapping:
+        "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
+        "Qwen/Qwen3-30B-A3B": Qwen3-30B-A3B
+        "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
         "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
+        "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
         "Qwen/Qwen3-32B": Qwen3-32B
         "Qwen/Qwen3-8B": Qwen3-8B
         "Qwen/QwQ-32B": QwQ-32B
@@ -296,8 +364,8 @@ Parameters:
             - ${ModelType}
             - Qwen
     Description:
-      zh-cn: Qwen3-235B-A22B模型需要h20实例规格，部署前请提交工单申请h20购买规格。
-      en: Qwen3-235B-A22B models need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
+      zh-cn: 部分模型需要L20或H20实例规格，部署前请提交工单申请L20或h20购买规格。
+      en: Some models need L20 or H20 instance specifications, please submit a ticket to apply for the purchase of L20 or H20 specifications.
   ModelNameDeepseek:
     Type: String
     Label:
@@ -340,16 +408,84 @@ Parameters:
               - Qwen/Qwen3-32B
           Value:
             - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
             - ecs.gn8is-4x.16xlarge
             - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-32B-FP8
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-30B-A3B
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-30B-A3B-FP8
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameQwen}'
               - Qwen/Qwen3-235B-A22B
           Value:
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameQwen}'
+              - Qwen/Qwen3-235B-A22B-FP8
+          Value:
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn8v-4x.8xlarge
+            - ecs.gn8v-4x.24xlarge
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
             - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
@@ -412,9 +548,6 @@ Parameters:
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
             - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameQwen}'
@@ -435,9 +568,6 @@ Parameters:
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
             - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameDeepseek}'
@@ -506,9 +636,6 @@ Parameters:
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
             - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.32xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameDeepseek}'
@@ -678,7 +805,19 @@ Resources:
                               - Fn::If:
                                   - IsQwen3-8B
                                   - qwen3_8b
-                                  - deepseek_r1_7b
+                                  - Fn::If:
+                                      - IsQwen3-32B-FP8
+                                      - qwen3_32b_fp8
+                                      - Fn::If:
+                                          - IsQwen3-30B-A3B
+                                          - qwen3_30b_a3b
+                                          - Fn::If:
+                                              - IsQwen3-30B-A3B-FP8
+                                              - qwen3_30b_a3b_fp8
+                                              - Fn::If:
+                                                  - IsQwen3-235B-A22B-FP8
+                                                  - qwen3_235b_a22b_fp8
+                                                  - deepseek_r1_7b
       Password:
         Ref: InstancePassword
       InstanceType:
