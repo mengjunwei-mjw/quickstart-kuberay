@@ -1,20 +1,19 @@
-ROSTemplateFormatVersion: "2015-09-01"
+ROSTemplateFormatVersion: '2015-09-01'
 Description:
   zh-cn: 从镜像仓库部署单机容器应用
   en: Deploy container application from image registry
 Parameters:
-  # Branch入参用来配置变配操作
   Branch:
     Type: String
     Label:
       en: Branch
       zh-cn: 代码分支
-    AssociationProperty: "ALIYUN::OOS::GitBranch::Name"
+    AssociationProperty: ALIYUN::OOS::GitBranch::Name
     AssociationPropertyMetadata:
       Platform: ${GitPlatform}
-      Owner: "${GitAccount}"
-      RepoFullName: "${GitRepository}"
-      Organization: "${GitOrganization}"
+      Owner: ${GitAccount}
+      RepoFullName: ${GitRepository}
+      Organization: ${GitOrganization}
   CommitHash:
     Type: String
     Label:
@@ -28,21 +27,19 @@ Parameters:
       Platform: ${GitPlatform}
       Owner: ${GitAccount}
       RepoFullName: ${GitRepository}
-      Organization: "${GitOrganization}"
+      Organization: ${GitOrganization}
       Branch: ${Branch}
       ReadOnly: true
-  ############ 隐藏参数 ############
   ImagePullPath:
     Type: String
-    Default: ""
+    Default: ''
   AcrUsername:
     Type: String
-    Default: ""
+    Default: ''
   AcrPassword:
     Type: String
     NoEcho: true
-    Default: ""
-  ############ 隐藏参数 end ############
+    Default: ''
   EnvVar:
     Type: Json
     Label:
@@ -76,9 +73,9 @@ Parameters:
     AssociationPropertyMetadata:
       Visible:
         Condition:
-          "Fn::Not":
-            "Fn::Equals":
-              - "${ChargeType}"
+          Fn::Not:
+            Fn::Equals:
+              - ${ChargeType}
               - PostPaid
     Default: Month
     AllowedValues:
@@ -92,9 +89,9 @@ Parameters:
     AssociationPropertyMetadata:
       Visible:
         Condition:
-          "Fn::Not":
-            "Fn::Equals":
-              - "${ChargeType}"
+          Fn::Not:
+            Fn::Equals:
+              - ${ChargeType}
               - PostPaid
     Default: 1
     Label:
@@ -124,10 +121,10 @@ Parameters:
     Description:
       zh-cn: 请参考<a href='https://help.aliyun.com/zh/ecs/use-cases/best-practices-for-instance-type-selection' target='_blank'>ECS选型最佳实践</a>
       en: Please refer to <a href='https://www.alibabacloud.com/help/en/ecs/use-cases/best-practices-for-instance-type-selection' target='_blank'>Best practices for selecting ECS instance types</a>
-    AssociationProperty: "ALIYUN::ECS::Instance::InstanceType"
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
-      InstanceChargeType: "${ChargeType}"
-      ZoneId: "${ZoneId}"
+      InstanceChargeType: ${ChargeType}
+      ZoneId: ${ZoneId}
       Constraints:
         InstanceTypeFamily:
           - ecs.u1
@@ -138,7 +135,7 @@ Parameters:
     Description:
       en: Server login password, Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
       zh-cn: 云服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
-    AllowedPattern: '^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$'
+    AllowedPattern: ^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$
     Label:
       en: New ECS Instance Password
       zh-cn: 新建云服务器的初始密码
@@ -152,7 +149,7 @@ Parameters:
     Type: Number
     Description:
       zh-cn: 系统盘大小, 取值范围：[20, 500], 单位：GB。
-      en: "System disk size of each node, range of values: 20-500, units: GB."
+      en: 'System disk size of each node, range of values: 20-500, units: GB.'
     MinValue: 20
     MaxValue: 500
     Label:
@@ -167,7 +164,7 @@ Parameters:
     MaxValue: 100
     Description:
       zh-cn: 公网出带宽最大值, 取值范围1-100
-      en: "Internet Max Bandwidth Out,range of values: 1-100"
+      en: 'Internet Max Bandwidth Out,range of values: 1-100'
   InternetChargeType:
     Type: String
     Label:
@@ -194,12 +191,12 @@ Parameters:
     Label:
       zh-cn: 可用区
       en: Zone
-    AssociationProperty: "ALIYUN::ECS::Instance::ZoneId"
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
     AssociationPropertyMetadata:
       InstanceChargeType: ${ChargeType}
       SystemDiskCategory: cloud_essd
       InstanceType: ${EcsInstanceType}
-      DefaultValueStrategy: "first"
+      DefaultValueStrategy: first
   VpcOption:
     Type: String
     Label:
@@ -231,7 +228,7 @@ Parameters:
           Fn::Equals:
             - ExistingVPC
             - ${VpcOption}
-    Default: ""
+    Default: ''
   VSwitchId:
     Type: String
     Label:
@@ -241,13 +238,13 @@ Parameters:
     AssociationPropertyMetadata:
       AutoSelectFirst: true
       VpcId: ${VpcId}
-      ZoneId: "${ZoneId}"
+      ZoneId: ${ZoneId}
       Visible:
         Condition:
           Fn::Equals:
             - ExistingVPC
             - ${VpcOption}
-    Default: ""
+    Default: ''
   VpcCidrBlock:
     Type: String
     Label:
@@ -255,7 +252,7 @@ Parameters:
       zh-cn: 专有网络IPv4网段
     Description:
       zh-cn: VPC的ip地址段范围，您可以使用以下的ip地址段或其子网:<br><font color='green'>[10.0.0.0/8]</font><br><font color='green'>[172.16.0.0/12]</font><br><font color='green'>[192.168.0.0/16]</font>
-      en: "The ip address range of the VPC in the CidrBlock form; <br>You can use the following ip address ranges and their subnets: <br><font color='green'>[10.0.0.0/8]</font><br><font color='green'>[172.16.0.0/12]</font><br><font color='green'>[192.168.0.0/16]</font>"
+      en: 'The ip address range of the VPC in the CidrBlock form; <br>You can use the following ip address ranges and their subnets: <br><font color=''green''>[10.0.0.0/8]</font><br><font color=''green''>[172.16.0.0/12]</font><br><font color=''green''>[192.168.0.0/16]</font>'
     Default: 192.168.0.0/16
     Required: true
     AssociationProperty: ALIYUN::VPC::VPC::CidrBlock
@@ -301,7 +298,7 @@ Resources:
       VpcCidrBlock:
         Ref: VpcCidrBlock
   EcsSecurityGroup:
-    Type: "ALIYUN::ECS::SecurityGroup"
+    Type: ALIYUN::ECS::SecurityGroup
     Properties:
       VpcId:
         Fn::GetAtt:
@@ -315,9 +312,9 @@ Resources:
         - SourceCidrIp: 0.0.0.0/0
           IpProtocol: tcp
           PortRange:
-            Fn::Sub: "${Port}/${Port}"
+            Fn::Sub: ${Port}/${Port}
   EcsInstanceGroup:
-    Type: "ALIYUN::ECS::InstanceGroup"
+    Type: ALIYUN::ECS::InstanceGroup
     Properties:
       UpdatePolicy: ForAllInstances
       IoOptimized: optimized
@@ -334,7 +331,7 @@ Resources:
       SystemDiskCategory: cloud_essd
       SystemDiskSize:
         Ref: SystemDiskSize
-      ImageId: "{{ resolve:oos:aliyun/services/computenest/images/aliyun_3_2104_docker_26 }}"
+      ImageId: '{{ resolve:oos:aliyun/services/computenest/images/aliyun_3_2104_docker_26 }}'
       PeriodUnit:
         Ref: PeriodUnit
       VSwitchId:
@@ -411,7 +408,7 @@ Resources:
         Fn::GetAtt:
           - EcsInstanceGroup
           - InstanceIds
-      Timeout: "600"
+      Timeout: '600'
 Outputs:
   endpoint:
     Label:
@@ -422,7 +419,7 @@ Outputs:
       en: Application endpoint
     Value:
       Fn::Sub:
-        - "http://${ServerAddress}:${Port}"
+        - http://${ServerAddress}:${Port}
         - ServerAddress:
             Fn::Select:
               - 0
@@ -438,7 +435,7 @@ Outputs:
       en: Connect to ECS instance via Workbench
     Value:
       Fn::Sub:
-        - "https://ecs-workbench.aliyun.com/?from=ecs&instanceType=ecs&regionId=${RegionId}&instanceId=${InstanceId}"
+        - https://ecs-workbench.aliyun.com/?from=ecs&instanceType=ecs&regionId=${RegionId}&instanceId=${InstanceId}
         - InstanceId:
             Fn::Select:
               - 0
@@ -449,7 +446,7 @@ Outputs:
             Ref: ALIYUN::Region
 Mappings: {}
 Metadata:
-  "ALIYUN::ROS::Interface":
+  ALIYUN::ROS::Interface:
     ParameterGroups:
       - Parameters:
           - Branch
@@ -490,8 +487,11 @@ Metadata:
           - ImagePullPath
           - AcrUsername
           - AcrPassword
-        Label: ""
-    Hidden: ["ImagePullPath", "AcrUsername", "AcrPassword"]
+        Label: ''
+    Hidden:
+      - ImagePullPath
+      - AcrUsername
+      - AcrPassword
   PredefinedParameters:
     - Name:
         zh-cn: 基础版
