@@ -9,61 +9,79 @@ Mappings:
       MaxModelLen: 16384
       VllmVersion: 0.7.2
       GpuMemory: 0.98
+      Quantization: 16
     Qwen/Qwen2.5-32B-Instruct:
       SystemDiskSize: 200
       MaxModelLen: 16384
       VllmVersion: 0.7.2
       GpuMemory: 0.98
+      Quantization: 16
     Qwen/Qwen3-32B:
       SystemDiskSize: 300
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.85
+      Quantization: 16
     Qwen/Qwen3-32B-FP8:
       SystemDiskSize: 150
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.85
+      Quantization: 8
     Qwen/Qwen3-30B-A3B:
       SystemDiskSize: 200
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.85
+      Quantization: 8
     Qwen/Qwen3-30B-A3B-FP8:
       SystemDiskSize: 150
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.85
+      Quantization: 8
     Qwen/Qwen3-235B-A22B:
       SystemDiskSize: 800
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
+      Quantization: 16
     Qwen/Qwen3-235B-A22B-FP8:
       SystemDiskSize: 550
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
+      Quantization: 8
     Qwen/Qwen3-8B:
       SystemDiskSize: 80
       MaxModelLen: 8192
       VllmVersion: 0.8.5
       GpuMemory: 0.95
+      Quantization: 16
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
       SystemDiskSize: 300
       MaxModelLen: 16384
       VllmVersion: 0.7.2
       GpuMemory: 0.98
+      Quantization: 16
     deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
       SystemDiskSize: 200
       MaxModelLen: 16384
       VllmVersion: 0.7.2
       GpuMemory: 0.98
+      Quantization: 16
     deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
       SystemDiskSize: 80
       MaxModelLen: 8192
       VllmVersion: 0.7.2
       GpuMemory: 0.98
+      Quantization: 16
+    nv-community/Cosmos-Reason1-7B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -81,7 +99,10 @@ Conditions:
           - Fn::If:
               - IsQwenModel
               - Ref: ModelNameQwen
-              - Ref: ModelNameDeepseek
+              - Fn::If:
+                  - IsDeepseekModel
+                  - Ref: ModelNameDeepseek
+                  - Ref: ModelNameCosmos
           - VllmVersion
   IsQwen3:
     Fn::And:
@@ -110,9 +131,30 @@ Conditions:
           - Fn::Equals:
               - 'Qwen/Qwen3-8B'
               - Ref: ModelNameQwen
+  IsFP8Model:
+    Fn::Equals:
+      - 8
+      - Fn::FindInMap:
+          - ModelMap
+          - Fn::If:
+              - IsQwenModel
+              - Ref: ModelNameQwen
+              - Fn::If:
+                  - IsDeepseekModel
+                  - Ref: ModelNameDeepseek
+                  - Ref: ModelNameCosmos
+          - Quantization
   IsQwenModel:
     Fn::Equals:
       - 'Qwen'
+      - Ref: ModelType
+  IsDeepseekModel:
+    Fn::Equals:
+      - 'Deepseek'
+      - Ref: ModelType
+  IsCosmosModel:
+    Fn::Equals:
+      - 'Cosmos'
       - Ref: ModelType
   IsQwQ32B:
     Fn::Equals:
@@ -120,77 +162,84 @@ Conditions:
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen32B:
     Fn::Equals:
       - 'Qwen/Qwen2.5-32B-Instruct'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-32B:
     Fn::Equals:
       - 'Qwen/Qwen3-32B'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-32B-FP8:
     Fn::Equals:
       - 'Qwen/Qwen3-32B-FP8'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-30B-A3B:
     Fn::Equals:
       - 'Qwen/Qwen3-30B-A3B'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-30B-A3B-FP8:
     Fn::Equals:
       - 'Qwen/Qwen3-30B-A3B-FP8'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-235B-A22B:
     Fn::Equals:
       - 'Qwen/Qwen3-235B-A22B'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-235B-A22B-FP8:
     Fn::Equals:
       - 'Qwen/Qwen3-235B-A22B-FP8'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsQwen3-8B:
     Fn::Equals:
       - 'Qwen/Qwen3-8B'
       - Fn::If:
           - IsQwenModel
           - Ref: ModelNameQwen
-          - Ref: ModelNameDeepseek
+          - ''
   IsDeepSeekR170B:
     Fn::Equals:
       - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
       - Fn::If:
-          - IsQwenModel
-          - Ref: ModelNameQwen
+          - IsDeepseekModel
           - Ref: ModelNameDeepseek
+          - ''
   IsDeepSeekR132B:
     Fn::Equals:
       - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
       - Fn::If:
-          - IsQwenModel
-          - Ref: ModelNameQwen
+          - IsDeepseekModel
           - Ref: ModelNameDeepseek
+          - ''
+  IsCosmosR17B:
+    Fn::Equals:
+      - 'nv-community/Cosmos-Reason1-7B'
+      - Fn::If:
+          - IsCosmosModel
+          - Ref: ModelNameCosmos
+          - ''
 Parameters:
   PublicAccessOption:
     Type: String
@@ -331,6 +380,7 @@ Parameters:
     AllowedValues:
       - Qwen
       - Deepseek
+      - Cosmos
   ModelNameQwen:
     Type: String
     Label:
@@ -389,6 +439,25 @@ Parameters:
     Description:
       zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
       en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
+  ModelNameCosmos:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: "nv-community/Cosmos-Reason1-7B"
+    AllowedValues:
+      - nv-community/Cosmos-Reason1-7B
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        "nv-community/Cosmos-Reason1-7B": Cosmos-Reason1-7B
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${ModelType}
+            - Cosmos
+    Description:
+      zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+      en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
   EcsInstanceType:
     Type: String
     Label:
@@ -402,6 +471,47 @@ Parameters:
       InstanceChargeType: ${PayType}
       ZoneId: ${ZoneId}
       AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - '${ModelNameCosmos}'
+              - nv-community/Cosmos-Reason1-7B
+          Value:
+            - ecs.gn7i-c8g1.2xlarge
+            - ecs.gn7i-c16g1.4xlarge
+            - ecs.gn7i-c32g1.8xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c48e.12xlarge
+            - ecs.gn8is.2xlarge
+            - ecs.gn8is.4xlarge
+            - ecs.gn8ia.4xlarge
+            - ecs.gn8ia.8xlarge
+            - ecs.gn8ia.16xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8ia-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8ia-4x.64xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7s-c8g1.2xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.gn7s-c48g1.12xlarge
+            - ecs.gn7s-c16g1.4xlarge
+            - ecs.gn7s-c56g1.14xlarge
         - Condition:
             Fn::Equals:
               - '${ModelNameQwen}'
@@ -423,10 +533,6 @@ Parameters:
           Value:
             - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
             - ecs.gn8is-2x.8xlarge
             - ecs.gn8ia-2x.8xlarge
             - ecs.gn8is-4x.16xlarge
@@ -457,10 +563,6 @@ Parameters:
           Value:
             - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
             - ecs.gn8is-2x.8xlarge
             - ecs.gn8ia-2x.8xlarge
             - ecs.gn8is-4x.16xlarge
@@ -817,7 +919,10 @@ Resources:
                                               - Fn::If:
                                                   - IsQwen3-235B-A22B-FP8
                                                   - qwen3_235b_a22b_fp8
-                                                  - deepseek_r1_7b
+                                                  - Fn::If:
+                                                      - IsCosmosR17B
+                                                      - cosmos_r1_7b
+                                                      - deepseek_r1_7b
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -873,7 +978,7 @@ Resources:
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Parameters}"
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Parameters}${Quantization}"
 
             MAX_TIMEOUT=3000
             INTERVAL=10
@@ -893,7 +998,10 @@ Resources:
               Fn::If:
                 - IsQwenModel
                 - Ref: ModelNameQwen
-                - Ref: ModelNameDeepseek
+                - Fn::If:
+                    - IsDeepseekModel
+                    - Ref: ModelNameDeepseek
+                    - Ref: ModelNameCosmos
             VLLM_API_KEY:
               Fn::Join:
                 - '-'
@@ -907,7 +1015,10 @@ Resources:
                 - Fn::If:
                     - IsQwenModel
                     - Ref: ModelNameQwen
-                    - Ref: ModelNameDeepseek
+                    - Fn::If:
+                        - IsDeepseekModel
+                        - Ref: ModelNameDeepseek
+                        - Ref: ModelNameCosmos
                 - MaxModelLen
             InstallVllm:
               Fn::If:
@@ -921,7 +1032,10 @@ Resources:
                           - Fn::If:
                               - IsQwenModel
                               - Ref: ModelNameQwen
-                              - Ref: ModelNameDeepseek
+                              - Fn::If:
+                                  - IsDeepseekModel
+                                  - Ref: ModelNameDeepseek
+                                  - Ref: ModelNameCosmos
                           - VllmVersion
             GpuMemory:
               Fn::FindInMap:
@@ -929,12 +1043,20 @@ Resources:
                 - Fn::If:
                     - IsQwenModel
                     - Ref: ModelNameQwen
-                    - Ref: ModelNameDeepseek
+                    - Fn::If:
+                        - IsDeepseekModel
+                        - Ref: ModelNameDeepseek
+                        - Ref: ModelNameCosmos
                 - GpuMemory
             Parameters:
               Fn::If:
                 - IsQwen3
                 - ' --enable-reasoning --reasoning-parser deepseek_r1'
+                - ''
+            Quantization:
+              Fn::If:
+                - IsFP8Model
+                - ' --quantization fp8'
                 - ''
 Outputs:
   模型名称:
@@ -945,7 +1067,10 @@ Outputs:
       Fn::If:
         - IsQwenModel
         - Ref: ModelNameQwen
-        - Ref: ModelNameDeepseek
+        - Fn::If:
+            - IsDeepseekModel
+            - Ref: ModelNameDeepseek
+            - Ref: ModelNameCosmos
   Api_Key:
     NoEcho: true
     Label: API Key
@@ -1007,7 +1132,10 @@ Outputs:
             Fn::If:
               - IsQwenModel
               - Ref: ModelNameQwen
-              - Ref: ModelNameDeepseek
+              - Fn::If:
+                  - IsDeepseekModel
+                  - Ref: ModelNameDeepseek
+                  - Ref: ModelNameCosmos
           API_KEY:
             Fn::Join:
               - '-'
@@ -1048,6 +1176,7 @@ Metadata:
           - ModelType
           - ModelNameQwen
           - ModelNameDeepseek
+          - ModelNameCosmos
           - EcsInstanceType
           - InstancePassword
         Label:
