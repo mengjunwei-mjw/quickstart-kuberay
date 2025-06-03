@@ -386,28 +386,28 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "Qwen/Qwen3-30B-A3B-FP8"
+    Default: "Qwen/Qwen3-8B"
     AllowedValues:
-      - Qwen/Qwen3-30B-A3B-FP8
-      - Qwen/Qwen3-30B-A3B
-      - Qwen/Qwen3-235B-A22B-FP8
-      - Qwen/Qwen3-235B-A22B
-      - Qwen/Qwen3-32B-FP8
-      - Qwen/Qwen3-32B
       - Qwen/Qwen3-8B
+      - Qwen/Qwen3-30B-A3B
+      - Qwen/Qwen3-32B
+      - Qwen/Qwen3-235B-A22B
       - Qwen/QwQ-32B
       - Qwen/Qwen2.5-32B-Instruct
+      - Qwen/Qwen3-30B-A3B-FP8
+      - Qwen/Qwen3-32B-FP8
+      - Qwen/Qwen3-235B-A22B-FP8
     AssociationPropertyMetadata:
       ValueLabelMapping:
-        "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
-        "Qwen/Qwen3-30B-A3B": Qwen3-30B-A3B
-        "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
-        "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
-        "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
-        "Qwen/Qwen3-32B": Qwen3-32B
         "Qwen/Qwen3-8B": Qwen3-8B
+        "Qwen/Qwen3-30B-A3B": Qwen3-30B-A3B
+        "Qwen/Qwen3-32B": Qwen3-32B
+        "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
         "Qwen/QwQ-32B": QwQ-32B
         "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
+        "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
+        "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
+        "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
       Visible:
         Condition:
           Fn::Equals:
@@ -421,7 +421,7 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    Default: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     AllowedValues:
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B

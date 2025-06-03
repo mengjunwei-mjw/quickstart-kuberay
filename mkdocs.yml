@@ -5,31 +5,10 @@ Description:
 Parameters:
   Branch:
     Type: String
-    Label:
-      en: Branch
-      zh-cn: 代码分支
-    AssociationProperty: ALIYUN::OOS::GitBranch::Name
-    AssociationPropertyMetadata:
-      Platform: ${GitPlatform}
-      Owner: ${GitAccount}
-      RepoFullName: ${GitRepository}
-      Organization: ${GitOrganization}
+    Default: ''
   CommitHash:
     Type: String
-    Label:
-      en: Git Commit
-      zh-cn: Git Commit
-    Description:
-      en: Input branch to get latest commit hash automatically, commit should be different when update application;If commit is not set, check git repository and branch name
-      zh-cn: 输入分支后自动获取分支最新的Commit Hash，更新应用时Commit必须不同；如果无法获取Commit请检查仓库地址和分支名称是否正确
-    AssociationProperty: ALIYUN::OOS::GitBranch::CommitHash
-    AssociationPropertyMetadata:
-      Platform: ${GitPlatform}
-      Owner: ${GitAccount}
-      RepoFullName: ${GitRepository}
-      Organization: ${GitOrganization}
-      Branch: ${Branch}
-      ReadOnly: true
+    Default: ''
   ImagePullPath:
     Type: String
     Default: ''
@@ -449,29 +428,456 @@ Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
       - Parameters:
-          - Branch
-          - CommitHash
-          - EnvVar
+          - EcsInstanceType
+          - SystemDiskSize
+          - InternetChargeType
+          - InternetMaxBandwidthOut
+          - ChargeType
+          - PeriodUnit
+          - Period
+          - InstancePassword
           - Port
-        Label:
-          zh-cn: 应用配置
-          en: Application configuration
+        Label: ''
+      - Parameters:ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  zh-cn: 从镜像仓库部署单机容器应用
+  en: Deploy container application from image registry
+Parameters:
+  Branch:
+    Type: String
+    Default: ''
+  CommitHash:
+    Type: String
+    Default: ''
+  ImagePullPath:
+    Type: String
+    Default: ''
+  AcrUsername:
+    Type: String
+    Default: ''
+  AcrPassword:
+    Type: String
+    NoEcho: true
+    Default: ''
+  EnvVar:
+    Type: Json
+    Label:
+      en: Environment variables
+      zh-cn: 环境变量
+    Description:
+      en: Environment variables for the container. Some applications need to set environment variables to start normally, some applications support initialization through environment variables such as setting the initial account and password for the application
+      zh-cn: 设置容器的环境变量。有些应用程序需要设置环境变量才能正常启动，有些应用程序支持通过环境变量来初始化比如设置应用的初始账号和密码
+    AssociationProperty: List[Parameters]
+    AssociationPropertyMetadata:
+      Parameters:
+        Name:
+          Type: String
+        Value:
+          Type: String
+    Default: []
+  ChargeType:
+    Label:
+      zh-cn: 付费类型
+      en: Pay type
+    Type: String
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+    Default: PostPaid
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: ChargeType
+  PeriodUnit:
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${ChargeType}
+              - PostPaid
+    Default: Month
+    AllowedValues:
+      - Month
+    Label:
+      zh-cn: 购买资源时长周期
+      en: Pay period unit
+    Type: String
+  Period:
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${ChargeType}
+              - PostPaid
+    Default: 1
+    Label:
+      zh-cn: 预付费资源的购买时长
+      en: Prepaid resource pay period
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 12
+      - 24
+      - 36
+      - 48
+      - 60
+    Type: Number
+  EcsInstanceType:
+    Type: String
+    Label:
+      en: Instance Type
+      zh-cn: 实例类型
+    Description:
+      zh-cn: 请参考<a href='https://help.aliyun.com/zh/ecs/use-cases/best-practices-for-instance-type-selection' target='_blank'>ECS选型最佳实践</a>
+      en: Please refer to <a href='https://www.alibabacloud.com/help/en/ecs/use-cases/best-practices-for-instance-type-selection' target='_blank'>Best practices for selecting ECS instance types</a>
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      InstanceChargeType: ${ChargeType}
+      ZoneId: ${ZoneId}
+      Constraints:
+        InstanceTypeFamily:
+          - ecs.u1
+          - ecs.e
+  InstancePassword:
+    NoEcho: true
+    Type: String
+    Description:
+      en: Server login password, Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
+      zh-cn: 云服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
+    AllowedPattern: ^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$
+    Label:
+      en: New ECS Instance Password
+      zh-cn: 新建云服务器的初始密码
+    ConstraintDescription:
+      en: Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
+      zh-cn: 长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
+    MinLength: 8
+    MaxLength: 30
+    AssociationProperty: ALIYUN::ECS::Instance::Password
+  SystemDiskSize:
+    Type: Number
+    Description:
+      zh-cn: 系统盘大小, 取值范围：[20, 500], 单位：GB。
+      en: 'System disk size of each node, range of values: 20-500, units: GB.'
+    MinValue: 20
+    MaxValue: 500
+    Label:
+      zh-cn: 系统盘空间
+      en: System Disk Space
+  InternetMaxBandwidthOut:
+    Type: Number
+    Label:
+      zh-cn: 公网出带宽最大值
+      en: Internet Max Bandwidth Out
+    MinValue: 1
+    MaxValue: 100
+    Description:
+      zh-cn: 公网出带宽最大值, 取值范围1-100
+      en: 'Internet Max Bandwidth Out,range of values: 1-100'
+  InternetChargeType:
+    Type: String
+    Label:
+      zh-cn: 网络付费类型
+      en: Internet Charge Type
+    AllowedValues:
+      - PayByBandwidth
+      - PayByTraffic
+    AssociationPropertyMetadata:
+      LocaleKey: InternetChargeType
+  Port:
+    Type: Number
+    Label:
+      en: Application listen port
+      zh-cn: 应用监听端口
+    Description:
+      en: The port application process listens to. Port will be passed to application as environment variable PORT. If application code does not support setting port through environment variable, please set to the default port that application code listens to
+      zh-cn: 应用程序进程监听的端口。端口会作为环境变量PORT传递给应用。如果应用代码不支持通过环境变量设置端口，请填写应用代码默认监听的端口
+    MaxValue: 65535
+    MinValue: 0
+    Default: 80
+  ZoneId:
+    Type: String
+    Label:
+      zh-cn: 可用区
+      en: Zone
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+    AssociationPropertyMetadata:
+      InstanceChargeType: ${ChargeType}
+      SystemDiskCategory: cloud_essd
+      InstanceType: ${EcsInstanceType}
+      DefaultValueStrategy: first
+  VpcOption:
+    Type: String
+    Label:
+      en: Select Existing or New VPC
+      zh-cn: 选择已有/新建的专有网络
+    AllowedValues:
+      - NewVPC
+      - ExistingVPC
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        NewVPC:
+          zh-cn: 新建专有网络
+          en: New VPC
+        ExistingVPC:
+          zh-cn: 已有专有网络
+          en: Existing VPC
+    Required: true
+    Default: NewVPC
+  VpcId:
+    Type: String
+    Label:
+      en: VPC ID
+      zh-cn: 专有网络VPC实例ID
+    AssociationProperty: ALIYUN::ECS::VPC::VPCId
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+    Default: ''
+  VSwitchId:
+    Type: String
+    Label:
+      en: VSwitch ID
+      zh-cn: 交换机实例ID
+    AssociationProperty: ALIYUN::ECS::VSwitch::VSwitchId
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      VpcId: ${VpcId}
+      ZoneId: ${ZoneId}
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+    Default: ''
+  VpcCidrBlock:
+    Type: String
+    Label:
+      en: VPC CIDR IPv4 Block
+      zh-cn: 专有网络IPv4网段
+    Description:
+      zh-cn: VPC的ip地址段范围，您可以使用以下的ip地址段或其子网:<br><font color='green'>[10.0.0.0/8]</font><br><font color='green'>[172.16.0.0/12]</font><br><font color='green'>[192.168.0.0/16]</font>
+      en: 'The ip address range of the VPC in the CidrBlock form; <br>You can use the following ip address ranges and their subnets: <br><font color=''green''>[10.0.0.0/8]</font><br><font color=''green''>[172.16.0.0/12]</font><br><font color=''green''>[192.168.0.0/16]</font>'
+    Default: 192.168.0.0/16
+    Required: true
+    AssociationProperty: ALIYUN::VPC::VPC::CidrBlock
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+  VSwitchCidrBlock:
+    Type: String
+    Label:
+      en: VSwitch CIDR Block
+      zh-cn: 交换机子网网段
+    Description:
+      zh-cn: 必须属于VPC的子网段
+      en: Must belong to the subnet segment of VPC.
+    Default: 192.168.0.0/24
+    Required: true
+    AssociationProperty: ALIYUN::VPC::VSwitch::CidrBlock
+    AssociationPropertyMetadata:
+      VpcCidrBlock: VpcCidrBlock
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+Resources:
+  VpcModule:
+    Type: MODULE::ACS::ComputeNest::VpcAndVSwitch
+    Version: default
+    Properties:
+      ZoneId:
+        Ref: ZoneId
+      VpcOption:
+        Ref: VpcOption
+      VpcId:
+        Ref: VpcId
+      VSwitchId:
+        Ref: VSwitchId
+      VSwitchCidrBlock:
+        Ref: VSwitchCidrBlock
+      VpcCidrBlock:
+        Ref: VpcCidrBlock
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::GetAtt:
+          - VpcModule
+          - VpcId
+      SecurityGroupIngress:
+        - PortRange: 22/22
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+        - SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          PortRange:
+            Fn::Sub: ${Port}/${Port}
+  EcsInstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      UpdatePolicy: ForAllInstances
+      IoOptimized: optimized
+      ZoneId:
+        Ref: ZoneId
+      VpcId:
+        Fn::GetAtt:
+          - VpcModule
+          - VpcId
+      InstanceChargeType:
+        Ref: ChargeType
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Ref: SystemDiskSize
+      ImageId: '{{ resolve:oos:aliyun/services/computenest/images/aliyun_3_2104_docker_26 }}'
+      PeriodUnit:
+        Ref: PeriodUnit
+      VSwitchId:
+        Fn::GetAtt:
+          - VpcModule
+          - VSwitchId
+      Period:
+        Ref: Period
+      InstanceType:
+        Ref: EcsInstanceType
+      MaxAmount: 1
+      Password:
+        Ref: InstancePassword
+      AllocatePublicIP: true
+      InternetMaxBandwidthOut:
+        Ref: InternetMaxBandwidthOut
+      InternetChargeType:
+        Ref: InternetChargeType
+  RunApplication:
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      Sync: true
+      CommandContent:
+        Fn::Sub: |-
+          #!/bin/bash
+          if [ "${ImagePullPath}" == "" ]; then
+            echo "ImagePullPath is empty, please check."
+            exit 1
+          fi
+          # 判断是否镜像在本地是否已存在
+          docker images ${ImagePullPath} | grep ${ImagePullPath}
+          if [ $? -gt 0 ]; then
+            # 本地不存在镜像，且为私有镜像则进行登录registry
+            if [ "${AcrUsername}" != "" ]; then
+              echo "login to docker registry"
+              server=$(echo ${ImagePullPath} | awk -F/ '{print $1}')
+              docker login $server --username=${AcrUsername} --password=${AcrPassword}
+            fi
+          fi
+
+          # 保存环境变量
+          mkdir -p /opt/applicationmanager
+          touch /opt/applicationmanager/app.env
+          yum install -y jq
+          echo '${EnvVar}' | jq -r '.[] | "\(.Name)=\(.Value)"' >> /opt/applicationmanager/app.env
+
+          # 停止已有的服务
+          systemctl stop aliyun-applicationmanager
+
+          # 创建系统服务
+          cat > /etc/systemd/system/aliyun-applicationmanager.service <<EOF
+          [Unit]
+          Description=Docker application
+          Requires=docker.service
+          After=docker.service
+
+          [Service]
+          Restart=always
+          RemainAfterExit=yes
+          WorkingDirectory=/opt/applicationmanager
+          ExecStart=docker run --name applicationmanager --rm -p ${Port}:${Port} -e PORT=${Port} --env-file app.env ${ImagePullPath}
+          ExecStop=docker stop -t 10 applicationmanager
+          TimeoutStartSec=0
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl enable aliyun-applicationmanager
+          systemctl start aliyun-applicationmanager
+      Type: RunShellScript
+      InstanceIds:
+        Fn::GetAtt:
+          - EcsInstanceGroup
+          - InstanceIds
+      Timeout: '600'
+Outputs:
+  endpoint:
+    Label:
+      zh-cn: 应用访问入口
+      en: Application endpoint
+    Description:
+      zh-cn: 应用访问入口
+      en: Application endpoint
+    Value:
+      Fn::Sub:
+        - http://${ServerAddress}:${Port}
+        - ServerAddress:
+            Fn::Select:
+              - 0
+              - Fn::GetAtt:
+                  - EcsInstanceGroup
+                  - PublicIps
+  connectServer:
+    Label:
+      zh-cn: 远程连接云服务器
+      en: Connect to ECS instance
+    Description:
+      zh-cn: 通过Workbench远程连接云服务器
+      en: Connect to ECS instance via Workbench
+    Value:
+      Fn::Sub:
+        - https://ecs-workbench.aliyun.com/?from=ecs&instanceType=ecs&regionId=${RegionId}&instanceId=${InstanceId}
+        - InstanceId:
+            Fn::Select:
+              - 0
+              - Fn::GetAtt:
+                  - EcsInstanceGroup
+                  - InstanceIds
+          RegionId:
+            Ref: ALIYUN::Region
+Mappings: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
       - Parameters:
           - EcsInstanceType
           - SystemDiskSize
           - InternetChargeType
           - InternetMaxBandwidthOut
-        Label:
-          zh-cn: 云服务器规格
-          en: ECS instance type
-      - Parameters:
           - ChargeType
           - PeriodUnit
           - Period
           - InstancePassword
-        Label:
-          zh-cn: 云服务器付费类型和密码
-          en: ECS instance pay type and password
+          - Port
+        Label: ''
       - Parameters:
           - ZoneId
           - VpcOption
@@ -484,14 +890,24 @@ Metadata:
           en: Netowrk configuration
         DefaultExpand: false
       - Parameters:
+          - EnvVar
+        Label:
+          zh-cn: 高级配置
+          en: Advanced Configuration
+        DefaultExpand: false
+      - Parameters:
           - ImagePullPath
           - AcrUsername
           - AcrPassword
+          - Branch
+          - CommitHash
         Label: ''
     Hidden:
       - ImagePullPath
       - AcrUsername
       - AcrPassword
+      - Branch
+      - CommitHash
   PredefinedParameters:
     - Name:
         zh-cn: 基础版
@@ -501,7 +917,7 @@ Metadata:
         EcsInstanceType:
           - ecs.e-c1m1.large
         SystemDiskSize: 40
-        InternetMaxBandwidthOut: 10
+        InternetMaxBandwidthOut: 3
       OrderList:
         - EcsInstanceType
         - SystemDiskSize
@@ -514,9 +930,80 @@ Metadata:
       Parameters:
         InternetChargeType: PayByTraffic
         EcsInstanceType:
-          - ecs.e-c1m2.xlarge
-        SystemDiskSize: 120
-        InternetMaxBandwidthOut: 10
+          - ecs.u1-c1m2.large
+        SystemDiskSize: 80
+        InternetMaxBandwidthOut: 5
+      OrderList:
+        - EcsInstanceType
+        - SystemDiskSize
+        - InternetChargeType
+        - InternetMaxBandwidthOut
+      Type: Normal
+    - Name:
+        zh-cn: 自定义
+        en: Custom
+      Parameters: {}
+      Type: Custom
+      OrderList:
+        - EcsInstanceType
+        - SystemDiskSize
+        - InternetChargeType
+        - InternetMaxBandwidthOut
+
+          - ZoneId
+          - VpcOption
+          - VpcId
+          - VSwitchId
+          - VpcCidrBlock
+          - VSwitchCidrBlock
+        Label:
+          zh-cn: 网络配置
+          en: Netowrk configuration
+        DefaultExpand: false
+      - Parameters:
+          - EnvVar
+        Label:
+          zh-cn: 高级配置
+          en: Advanced Configuration
+        DefaultExpand: false
+      - Parameters:
+          - ImagePullPath
+          - AcrUsername
+          - AcrPassword
+          - Branch
+          - CommitHash
+        Label: ''
+    Hidden:
+      - ImagePullPath
+      - AcrUsername
+      - AcrPassword
+      - Branch
+      - CommitHash
+  PredefinedParameters:
+    - Name:
+        zh-cn: 基础版
+        en: Basic Edition
+      Parameters:
+        InternetChargeType: PayByTraffic
+        EcsInstanceType:
+          - ecs.e-c1m1.large
+        SystemDiskSize: 40
+        InternetMaxBandwidthOut: 3
+      OrderList:
+        - EcsInstanceType
+        - SystemDiskSize
+        - InternetChargeType
+        - InternetMaxBandwidthOut
+      Type: Normal
+    - Name:
+        zh-cn: 高级版
+        en: Advanced Edition
+      Parameters:
+        InternetChargeType: PayByTraffic
+        EcsInstanceType:
+          - ecs.u1-c1m2.large
+        SystemDiskSize: 80
+        InternetMaxBandwidthOut: 5
       OrderList:
         - EcsInstanceType
         - SystemDiskSize
