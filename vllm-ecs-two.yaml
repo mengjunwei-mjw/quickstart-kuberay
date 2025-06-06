@@ -7,9 +7,15 @@ Mappings:
     deepseek-ai/DeepSeek-R1:
       SystemDiskSize: 2048
       MaxModelLen: 32768
+      ECSImage: deepseek_r1_671b
     deepseek-ai/DeepSeek-V3:
       SystemDiskSize: 2048
       MaxModelLen: 12784
+      ECSImage: deepseek_v3
+    deepseek-ai/DeepSeek-R1-0518:
+      SystemDiskSize: 1000
+      MaxModelLen: 12784
+      ECSImage: deepseek_r1_0518
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -163,13 +169,15 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "deepseek-ai/DeepSeek-R1"
+    Default: "deepseek-ai/DeepSeek-R1-0518"
     AllowedValues:
+      - deepseek-ai/DeepSeek-R1-0518
       - deepseek-ai/DeepSeek-R1
       - deepseek-ai/DeepSeek-V3
     AssociationPropertyMetadata:
       ValueLabelMapping:
-        "deepseek-ai/DeepSeek-R1": DeepSeek-R1_671B
+        "deepseek-ai/DeepSeek-R1-0518": DeepSeek-R1-0518
+        "deepseek-ai/DeepSeek-R1": DeepSeek-R1
         "deepseek-ai/DeepSeek-V3": DeepSeek-V3
     Description:
       zh-cn: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
@@ -180,13 +188,19 @@ Parameters:
       en: Instance Type
       zh-cn: 实例类型
     Description:
-      zh-cn: DeepSeek-R1_671B和DeepSeek-V3需要h20实例规格，部署前请提交工单申请h20购买规格。
-      en: DeepSeek-R1_671B and DeepSeek-V3 need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
+      zh-cn: DeepSeek-R1和DeepSeek-V3需要h20实例规格，部署前请提交工单申请h20购买规格。
+      en: DeepSeek-R1 and DeepSeek-V3 need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
       ZoneId: ${ZoneId}
       AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1-0518
+          Value:
+            - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
               - '${ModelName}'
@@ -329,10 +343,10 @@ Resources:
       ZoneId:
         Ref: ZoneId
       ImageId:
-        Fn::If:
-          - IsDeepSeekR1671B
-          - deepseek_r1_671b
-          - deepseek_v3
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - ECSImage
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -388,10 +402,10 @@ Resources:
       ZoneId:
         Ref: ZoneId
       ImageId:
-        Fn::If:
-          - IsDeepSeekR1671B
-          - deepseek_r1_671b
-          - deepseek_v3
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - ECSImage
       Password:
         Ref: InstancePassword
       InstanceType:
@@ -495,7 +509,7 @@ Resources:
             --ulimit stack=67108864 \
             -v /root:/root \
             egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
-            -c "pip install --upgrade vllm==0.8.2 && 
+            -c "pip install --upgrade vllm==0.8.5 && 
             export NCCL_IB_DISABLE=0 &&
             export NCCL_DEBUG=INFO &&
             export NCCL_NET_GDR_LEVEL=5 &&
@@ -506,7 +520,7 @@ Resources:
             ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
-            --gpu-memory-utilization 0.98 \
+            --gpu-memory-utilization 0.95 \
             --max-model-len ${MaxModelLen} \
             --enable-chunked-prefill \
             --host=0.0.0.0 \
