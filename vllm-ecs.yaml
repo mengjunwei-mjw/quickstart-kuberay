@@ -138,69 +138,41 @@ Conditions:
       - 0.7.2
       - Fn::FindInMap:
           - ModelMap
-          - Fn::If:
-              - IsQwenModel
-              - Ref: ModelNameQwen
-              - Fn::If:
-                  - IsDeepseekModel
-                  - Ref: ModelNameDeepseek
-                  - Ref: ModelNameCosmos
+          - Ref: ModelName
           - VllmVersion
   IsQwen3:
-    Fn::And:
+    Fn::Or:
       - Fn::Equals:
-          - 'Qwen'
-          - Ref: ModelType
-      - Fn::Or:
-          - Fn::Equals:
-              - 'Qwen/Qwen3-32B'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-32B-FP8'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-30B-A3B'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-30B-A3B-FP8'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-235B-A22B'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-235B-A22B-FP8'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-8B'
-              - Ref: ModelNameQwen
-          - Fn::Equals:
-              - 'Qwen/Qwen3-14B'
-              - Ref: ModelNameQwen
+          - 'Qwen/Qwen3-32B'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-32B-FP8'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-30B-A3B'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-30B-A3B-FP8'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-235B-A22B'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-235B-A22B-FP8'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-8B'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen3-14B'
+          - Ref: ModelName
   IsFP8Model:
     Fn::Equals:
       - 8
       - Fn::FindInMap:
           - ModelMap
-          - Fn::If:
-              - IsQwenModel
-              - Ref: ModelNameQwen
-              - Fn::If:
-                  - IsDeepseekModel
-                  - Ref: ModelNameDeepseek
-                  - Ref: ModelNameCosmos
+          - Ref: ModelName
           - Quantization
-  IsQwenModel:
-    Fn::Equals:
-      - 'Qwen'
-      - Ref: ModelType
-  IsDeepseekModel:
-    Fn::Equals:
-      - 'Deepseek'
-      - Ref: ModelType
-  IsCosmosModel:
-    Fn::Equals:
-      - 'Cosmos'
-      - Ref: ModelType
 Parameters:
   PublicAccessOption:
     Type: String
@@ -342,7 +314,7 @@ Parameters:
       - Qwen
       - Deepseek
       - Cosmos
-  ModelNameQwen:
+  ModelName:
     Type: String
     Label:
       en: Model Name
@@ -354,12 +326,48 @@ Parameters:
       - Qwen/Qwen3-30B-A3B
       - Qwen/Qwen3-32B
       - Qwen/Qwen3-235B-A22B
-      - Qwen/QwQ-32B
-      - Qwen/Qwen2.5-32B-Instruct
       - Qwen/Qwen3-30B-A3B-FP8
       - Qwen/Qwen3-32B-FP8
       - Qwen/Qwen3-235B-A22B-FP8
+      - Qwen/QwQ-32B
+      - Qwen/Qwen2.5-32B-Instruct
+      - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+      - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      - nv-community/Cosmos-Reason1-7B
     AssociationPropertyMetadata:
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Qwen'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen3-8B
+            - Qwen/Qwen3-14B
+            - Qwen/Qwen3-30B-A3B
+            - Qwen/Qwen3-32B
+            - Qwen/Qwen3-235B-A22B
+            - Qwen/Qwen3-30B-A3B-FP8
+            - Qwen/Qwen3-32B-FP8
+            - Qwen/Qwen3-235B-A22B-FP8
+            - Qwen/QwQ-32B
+            - Qwen/Qwen2.5-32B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'Deepseek'
+              - ${ModelType}
+          Value:
+            - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+            - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+        - Condition:
+            Fn::Equals:
+              - 'Cosmos'
+              - ${ModelType}
+          Value:
+            - nv-community/Cosmos-Reason1-7B
       ValueLabelMapping:
         "Qwen/Qwen3-8B": Qwen3-8B
         "Qwen/Qwen3-14B": Qwen3-14B
@@ -371,55 +379,11 @@ Parameters:
         "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
         "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
         "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
-      Visible:
-        Condition:
-          Fn::Equals:
-            - ${ModelType}
-            - Qwen
-    Description:
-      zh-cn: 部分模型需要L20或H20实例规格，部署前请提交工单申请L20或h20购买规格。
-      en: Some models need L20 or H20 instance specifications, please submit a ticket to apply for the purchase of L20 or H20 specifications.
-  ModelNameDeepseek:
-    Type: String
-    Label:
-      en: Model Name
-      zh-cn: 模型名称
-    Default: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
-    AllowedValues:
-      - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
-      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-      - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
-    AssociationPropertyMetadata:
-      ValueLabelMapping:
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": DeepSeek-R1-0528-Qwen3-8B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1-Distill-Qwen-7B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1-Distill-Qwen-32B
         "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1-Distill-Llama-70B
-      Visible:
-        Condition:
-          Fn::Equals:
-            - ${ModelType}
-            - Deepseek
-    Description:
-      zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
-      en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
-  ModelNameCosmos:
-    Type: String
-    Label:
-      en: Model Name
-      zh-cn: 模型名称
-    Default: "nv-community/Cosmos-Reason1-7B"
-    AllowedValues:
-      - nv-community/Cosmos-Reason1-7B
-    AssociationPropertyMetadata:
-      ValueLabelMapping:
         "nv-community/Cosmos-Reason1-7B": Cosmos-Reason1-7B
-      Visible:
-        Condition:
-          Fn::Equals:
-            - ${ModelType}
-            - Cosmos
     Description:
       zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
       en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
@@ -437,9 +401,19 @@ Parameters:
       ZoneId: ${ZoneId}
       AllowedValues:
         - Condition:
-            Fn::Equals:
-              - '${ModelNameDeepseek}'
-              - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+            Fn::Or:
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'nv-community/Cosmos-Reason1-7B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-8B'
+                  - ${ModelName}
           Value:
             - ecs.gn7i-c8g1.2xlarge
             - ecs.gn7i-c16g1.4xlarge
@@ -453,13 +427,8 @@ Parameters:
             - ecs.gn7i-c48e.12xlarge
             - ecs.gn8is.2xlarge
             - ecs.gn8is.4xlarge
-            - ecs.gn8ia.4xlarge
-            - ecs.gn8ia.8xlarge
-            - ecs.gn8ia.16xlarge
             - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
             - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-4x.8xlarge
@@ -479,15 +448,13 @@ Parameters:
             - ecs.gn7s-c56g1.14xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-14B
+              - 'Qwen/Qwen3-14B'
+              - ${ModelName}
           Value:
             - ecs.gn7i-c32g1.16xlarge
             - ecs.gn7i-c32g1.32xlarge
             - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
             - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-4x.8xlarge
@@ -499,118 +466,71 @@ Parameters:
             - ecs.gn7s-c32g1.16xlarge
             - ecs.gn7s-c32g1.32xlarge
         - Condition:
-            Fn::Equals:
-              - '${ModelNameCosmos}'
-              - nv-community/Cosmos-Reason1-7B
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/QwQ-32B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-32B-Instruct'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+                  - ${ModelName}
           Value:
-            - ecs.gn7i-c8g1.2xlarge
-            - ecs.gn7i-c16g1.4xlarge
-            - ecs.gn7i-c32g1.8xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c32g1.16xlarge
+            - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c48e.12xlarge
-            - ecs.gn8is.2xlarge
-            - ecs.gn8is.4xlarge
-            - ecs.gn8ia.4xlarge
-            - ecs.gn8ia.8xlarge
-            - ecs.gn8ia.16xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
             - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
             - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7s-c8g1.2xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.gn7s-c48g1.12xlarge
-            - ecs.gn7s-c16g1.4xlarge
-            - ecs.gn7s-c56g1.14xlarge
         - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-32B
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-30B-A3B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-32B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+                  - ${ModelName}
           Value:
             - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-8x.16xlarge
             - ecs.gn7i-8x.32xlarge
             - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
             - ecs.gn7e-c16g1.8xlarge
             - ecs.gn7e-c16g1.16xlarge
             - ecs.gn7e-c16g1.32xlarge
         - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-32B-FP8
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-30B-A3B-FP8'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-32B-FP8'
+                  - ${ModelName}
           Value:
             - ecs.ebmgn8v.48xlarge
-            - ecs.gn7i-c32g1.32xlarge
             - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
             - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
             - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn8v-4x.8xlarge
+            - ecs.gn8v-4x.24xlarge
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-30B-A3B
+              - 'Qwen/Qwen3-235B-A22B-FP8'
+              - ${ModelName}
           Value:
-            - ecs.ebmgn8v.48xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-30B-A3B-FP8
-          Value:
-            - ecs.ebmgn8v.48xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-235B-A22B
-          Value:
-            - ecs.ebmgn8v.48xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-235B-A22B-FP8
-          Value:
-            - ecs.gn8is-8x.32xlarge
             - ecs.gn8v-4x.8xlarge
             - ecs.gn8v-4x.24xlarge
             - ecs.gn8v-8x.16xlarge
@@ -618,164 +538,51 @@ Parameters:
             - ecs.ebmgn8v.48xlarge
         - Condition:
             Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen3-8B
+              - 'Qwen/Qwen3-235B-A22B'
+              - ${ModelName}
           Value:
-            - ecs.gn7i-c8g1.2xlarge
-            - ecs.gn7i-c16g1.4xlarge
-            - ecs.gn7i-c32g1.8xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c32g1.16xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c48e.12xlarge
-            - ecs.gn8is.2xlarge
-            - ecs.gn8is.4xlarge
-            - ecs.gn8ia.4xlarge
-            - ecs.gn8ia.8xlarge
-            - ecs.gn8ia.16xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7s-c8g1.2xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.gn7s-c48g1.12xlarge
-            - ecs.gn7s-c16g1.4xlarge
-            - ecs.gn7s-c56g1.14xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/QwQ-32B
-          Value:
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
             - ecs.ebmgn8v.48xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameQwen}'
-              - Qwen/Qwen2.5-32B-Instruct
-          Value:
-            - ecs.ebmgn8v.48xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameDeepseek}'
-              - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-          Value:
-            - ecs.gn7i-c8g1.2xlarge
-            - ecs.gn7i-c16g1.4xlarge
-            - ecs.gn7i-c32g1.8xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c32g1.16xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-c56g1.14xlarge
-            - ecs.gn7i-c48g1.12xlarge
-            - ecs.gn7i-c48e.12xlarge
-            - ecs.gn8is.2xlarge
-            - ecs.gn8is.4xlarge
-            - ecs.gn8ia.4xlarge
-            - ecs.gn8ia.8xlarge
-            - ecs.gn8ia.16xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7s-c8g1.2xlarge
-            - ecs.gn7s-c32g1.16xlarge
-            - ecs.gn7s-c32g1.8xlarge
-            - ecs.gn7s-c32g1.32xlarge
-            - ecs.gn7s-c48g1.12xlarge
-            - ecs.gn7s-c16g1.4xlarge
-            - ecs.gn7s-c56g1.14xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameDeepseek}'
-              - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-          Value:
-            - ecs.ebmgn8v.48xlarge
-            - ecs.gn8is.2xlarge
-            - ecs.gn8is.4xlarge
-            - ecs.gn8ia.4xlarge
-            - ecs.gn8ia.8xlarge
-            - ecs.gn8ia.16xlarge
-            - ecs.gn8is-2x.8xlarge
-            - ecs.gn8ia-2x.8xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7i-c32g1.16xlarge
-            - ecs.gn7i-c32g1.32xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-4x.8xlarge
-            - ecs.gn7i-2x.8xlarge
-            - ecs.gn7i-8x.32xlarge
-            - ecs.gn7i-4x.16xlarge
-            - ecs.gn7e-c16g1.4xlarge
-            - ecs.gn7e-c16g1.8xlarge
-            - ecs.gn7e-c16g1.16xlarge
-            - ecs.gn7e-c16g1.32xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelNameDeepseek}'
-              - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
-          Value:
-            - ecs.ebmgn8v.48xlarge
-            - ecs.gn8is-4x.16xlarge
-            - ecs.gn8ia-4x.64xlarge
-            - ecs.gn8is-8x.32xlarge
-            - ecs.gn7i-8x.16xlarge
-            - ecs.gn7i-8x.32xlarge
+  WhitelistConfirmation:
+    Type: String
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    Default: true
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          此模型需要L20或H20卡才可部署。使用此模型前，请确保已申请L20或H20实例规格。如未申请，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          This model requires an L20 or H20 card to deploy. Before using this model, please make sure you have applied for an L20 or H20 instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+                - 'Qwen/Qwen3-30B-A3B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-32B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-235B-A22B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-235B-A22B'
+                - ${ModelName}
   InstancePassword:
     NoEcho: true
     Type: String
@@ -915,13 +722,7 @@ Resources:
       ImageId:
         Fn::FindInMap:
           - ModelMap
-          - Fn::If:
-              - IsQwenModel
-              - Ref: ModelNameQwen
-              - Fn::If:
-                  - IsDeepseekModel
-                  - Ref: ModelNameDeepseek
-                  - Ref: ModelNameCosmos
+          - Ref: ModelName
           - ECSImage
       Password:
         Ref: InstancePassword
@@ -932,13 +733,7 @@ Resources:
       SystemDiskSize:
         Fn::FindInMap:
           - ModelMap
-          - Fn::If:
-              - IsQwenModel
-              - Ref: ModelNameQwen
-              - Fn::If:
-                  - IsDeepseekModel
-                  - Ref: ModelNameDeepseek
-                  - Ref: ModelNameCosmos
+          - Ref: ModelName
           - SystemDiskSize
       InternetMaxBandwidthOut:
         Fn::If:
@@ -998,13 +793,7 @@ Resources:
                 fi
             done
           - ModelName:
-              Fn::If:
-                - IsQwenModel
-                - Ref: ModelNameQwen
-                - Fn::If:
-                    - IsDeepseekModel
-                    - Ref: ModelNameDeepseek
-                    - Ref: ModelNameCosmos
+              Ref: ModelName
             VLLM_API_KEY:
               Fn::Join:
                 - '-'
@@ -1015,13 +804,7 @@ Resources:
             MaxModelLen:
               Fn::FindInMap:
                 - ModelMap
-                - Fn::If:
-                    - IsQwenModel
-                    - Ref: ModelNameQwen
-                    - Fn::If:
-                        - IsDeepseekModel
-                        - Ref: ModelNameDeepseek
-                        - Ref: ModelNameCosmos
+                - Ref: ModelName
                 - MaxModelLen
             InstallVllm:
               Fn::If:
@@ -1032,24 +815,12 @@ Resources:
                     - VllmVersion:
                         Fn::FindInMap:
                           - ModelMap
-                          - Fn::If:
-                              - IsQwenModel
-                              - Ref: ModelNameQwen
-                              - Fn::If:
-                                  - IsDeepseekModel
-                                  - Ref: ModelNameDeepseek
-                                  - Ref: ModelNameCosmos
+                          - Ref: ModelName
                           - VllmVersion
             GpuMemory:
               Fn::FindInMap:
                 - ModelMap
-                - Fn::If:
-                    - IsQwenModel
-                    - Ref: ModelNameQwen
-                    - Fn::If:
-                        - IsDeepseekModel
-                        - Ref: ModelNameDeepseek
-                        - Ref: ModelNameCosmos
+                - Ref: ModelName
                 - GpuMemory
             Parameters:
               Fn::If:
@@ -1064,13 +835,7 @@ Resources:
             DockerImage:
               Fn::FindInMap:
                 - ModelMap
-                - Fn::If:
-                    - IsQwenModel
-                    - Ref: ModelNameQwen
-                    - Fn::If:
-                        - IsDeepseekModel
-                        - Ref: ModelNameDeepseek
-                        - Ref: ModelNameCosmos
+                - Ref: ModelName
                 - DockerImage
 Outputs:
   模型名称:
@@ -1078,13 +843,7 @@ Outputs:
       zh-ch: 模型名称
       en: Model Name
     Value:
-      Fn::If:
-        - IsQwenModel
-        - Ref: ModelNameQwen
-        - Fn::If:
-            - IsDeepseekModel
-            - Ref: ModelNameDeepseek
-            - Ref: ModelNameCosmos
+      Ref: ModelName
   Api_Key:
     NoEcho: true
     Label: API Key
@@ -1143,13 +902,7 @@ Outputs:
       Fn::Sub:
         - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
         - ModelName:
-            Fn::If:
-              - IsQwenModel
-              - Ref: ModelNameQwen
-              - Fn::If:
-                  - IsDeepseekModel
-                  - Ref: ModelNameDeepseek
-                  - Ref: ModelNameCosmos
+            Ref: ModelName
           API_KEY:
             Fn::Join:
               - '-'
@@ -1188,9 +941,8 @@ Metadata:
           en: Payment Type Configuration
       - Parameters:
           - ModelType
-          - ModelNameQwen
-          - ModelNameDeepseek
-          - ModelNameCosmos
+          - ModelName
+          - WhitelistConfirmation
           - EcsInstanceType
           - InstancePassword
         Label:

@@ -182,6 +182,30 @@ Parameters:
     Description:
       zh-cn: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
       en: DeepSeek-R1_671B and DeepSeek-V3 models need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
+  WhitelistConfirmation:
+    Type: String
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    Default: true
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          此模型需要H20卡才可部署。使用此模型前，请确保已申请H20实例规格。如未申请，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          This model requires an H20 card to deploy. Before using this model, please make sure you have applied for an H20 instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
   EcsInstanceType:
     Type: String
     Label:
@@ -668,6 +692,7 @@ Metadata:
           en: Payment Type Configuration
       - Parameters:
           - ModelName
+          - WhitelistConfirmation
           - EcsInstanceType
           - InstancePassword
         Label:
