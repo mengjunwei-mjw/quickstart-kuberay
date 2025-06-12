@@ -124,11 +124,39 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: deepseek_r1_0528_8b
+    Qwen/Qwen2.5-VL-7B-Instruct:
+      SystemDiskSize: 60
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_7b
+    Qwen/Qwen2.5-VL-32B-Instruct:
+      SystemDiskSize: 160
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.92
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_32b
+    Qwen/Qwen2.5-VL-72B-Instruct:
+      SystemDiskSize: 350
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.92
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_72b
 Conditions:
   PublicAccessConditions:
-    Fn::Equals:
-      - public
-      - Ref: PublicAccessOption
+    Fn::Or:
+      - Fn::Equals:
+          - 'Qwen-VL'
+          - Ref: ModelType
+      - Fn::Equals:
+          - public
+          - Ref: PublicAccessOption
   CreateVpcConditions:
     Fn::Equals:
       - NewVPC
@@ -140,6 +168,17 @@ Conditions:
           - ModelMap
           - Ref: ModelName
           - VllmVersion
+  IsVLModel:
+    Fn::Or:
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-72B-Instruct'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-32B-Instruct'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-7B-Instruct'
+          - Ref: ModelName
   IsQwen3:
     Fn::Or:
       - Fn::Equals:
@@ -180,6 +219,12 @@ Parameters:
       - public
       - private
     AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - "Qwen-VL"
+              - ${ModelType}
       ValueLabelMapping:
         public:
           zh-cn: 开启公网访问
@@ -312,6 +357,7 @@ Parameters:
     Default: "Qwen"
     AllowedValues:
       - Qwen
+      - Qwen-VL
       - Deepseek
       - Cosmos
   ModelName:
@@ -331,6 +377,9 @@ Parameters:
       - Qwen/Qwen3-235B-A22B-FP8
       - Qwen/QwQ-32B
       - Qwen/Qwen2.5-32B-Instruct
+      - Qwen/Qwen2.5-VL-7B-Instruct
+      - Qwen/Qwen2.5-VL-32B-Instruct
+      - Qwen/Qwen2.5-VL-72B-Instruct
       - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
       - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
@@ -353,6 +402,14 @@ Parameters:
             - Qwen/Qwen3-235B-A22B-FP8
             - Qwen/QwQ-32B
             - Qwen/Qwen2.5-32B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'Qwen-VL'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen2.5-VL-7B-Instruct
+            - Qwen/Qwen2.5-VL-32B-Instruct
+            - Qwen/Qwen2.5-VL-72B-Instruct
         - Condition:
             Fn::Equals:
               - 'Deepseek'
@@ -379,6 +436,9 @@ Parameters:
         "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
         "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
         "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
+        "Qwen/Qwen2.5-VL-7B-Instruct": Qwen2.5-VL-7B-Instruct
+        "Qwen/Qwen2.5-VL-32B-Instruct": Qwen2.5-VL-32B-Instruct
+        "Qwen/Qwen2.5-VL-72B-Instruct": Qwen2.5-VL-72B-Instruct
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": DeepSeek-R1-0528-Qwen3-8B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1-Distill-Qwen-7B
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1-Distill-Qwen-32B
@@ -413,6 +473,9 @@ Parameters:
                   - ${ModelName}
               - Fn::Equals:
                   - 'Qwen/Qwen3-8B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-7B-Instruct'
                   - ${ModelName}
           Value:
             - ecs.gn7i-c8g1.2xlarge
@@ -476,6 +539,9 @@ Parameters:
               - Fn::Equals:
                   - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
                   - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-32B-Instruct'
+                  - ${ModelName}
           Value:
             - ecs.ebmgn8v.48xlarge
             - ecs.gn7i-c32g1.32xlarge
@@ -499,6 +565,9 @@ Parameters:
                   - ${ModelName}
               - Fn::Equals:
                   - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-72B-Instruct'
                   - ${ModelName}
           Value:
             - ecs.ebmgn8v.48xlarge
@@ -765,7 +834,7 @@ Resources:
             --name vllm \
             -v /root:/root \
             ${DockerImage} \
-            -c "${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
+            -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
             export NCCL_SOCKET_IFNAME=eth0 &&
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
@@ -776,7 +845,7 @@ Resources:
             --port 8080 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Parameters}${Quantization}"
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Qwen3Parameters}${Quantization}${VLParameters}"
 
             MAX_TIMEOUT=3000
             INTERVAL=10
@@ -822,7 +891,7 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - GpuMemory
-            Parameters:
+            Qwen3Parameters:
               Fn::If:
                 - IsQwen3
                 - ' --enable-reasoning --reasoning-parser deepseek_r1'
@@ -837,6 +906,16 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - DockerImage
+            InstallVLPackage:
+              Fn::If:
+                - IsVLModel
+                - 'pip install transformers==4.51.3 && pip install accelerate && pip install qwen-vl-utils && '
+                - ''
+            VLParameters:
+              Fn::If:
+                - IsVLModel
+                - ' --dtype bfloat16 --limit-mm-per-prompt image=5,video=5'
+                - ''
 Outputs:
   模型名称:
     Label:
@@ -893,42 +972,86 @@ Outputs:
       en: Chat with your LLM in DingTalk or WeChat
     Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/flow/fastTemplate/collection/tl-c3597861185a4053b207
   Api调用示例:
-    NoEcho: true
     Label:
       zh-ch: Api调用示例
       en: Api call example
     Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
     Value:
-      Fn::Sub:
-        - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
-        - ModelName:
-            Ref: ModelName
-          API_KEY:
-            Fn::Join:
-              - '-'
-              - - 'sk'
-                - Fn::GetAtt:
-                    - RandomApiKey
-                    - value
-          ApiServiceIp:
-            Fn::If:
-              - PublicAccessConditions
-              - Fn::Sub:
-                  - 'http://${Endpoint}:8080/v1'
-                  - Endpoint:
-                      Fn::Select:
-                        - '0'
-                        - Fn::GetAtt:
-                            - InstanceGroup
-                            - PublicIps
-              - Fn::Sub:
-                  - 'http://${Endpoint}:8080/v1'
-                  - Endpoint:
-                      Fn::Select:
-                        - '0'
-                        - Fn::GetAtt:
-                            - InstanceGroup
-                            - PrivateIps
+      Fn::If:
+        - IsVLModel
+        - Fn::Sub:
+            - 'curl -X POST "${ApiServiceIp}/chat/completions" 
+                      -H "Content-Type: application/json" 
+                      -H "Authorization: Bearer ${API_KEY}"
+                      --data ''{ 
+                        "stream": true,
+                        "model": "${ModelName}",
+                           "messages": [
+                             { "role": "system", "content": "You are a helpful assistant." },
+                             { "role": "user", "content": [
+                               { "type": "image_url", "image_url": { "url": "https://modelscope.oss-cn-beijing.aliyuncs.com/resource/qwen.png" } },
+                               { "type": "text", "text": "What is the text in the illustrate?" }
+                             ] }
+                           ]
+                      }'''
+            - ModelName:
+                Ref: ModelName
+              API_KEY:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+              ApiServiceIp:
+                Fn::If:
+                  - PublicAccessConditions
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8080/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PublicIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8080/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PrivateIps
+        - Fn::Sub:
+            - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
+            - ModelName:
+                Ref: ModelName
+              API_KEY:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+              ApiServiceIp:
+                Fn::If:
+                  - PublicAccessConditions
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8080/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PublicIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8080/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PrivateIps
 Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:

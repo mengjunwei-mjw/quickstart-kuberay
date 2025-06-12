@@ -644,7 +644,6 @@ Outputs:
       en: Chat with your LLM in DingTalk or WeChat
     Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/flow/fastTemplate/collection/tl-c3597861185a4053b207
   Api调用示例:
-    NoEcho: true
     Label:
       zh-ch: Api调用示例
       en: Api Call Example
