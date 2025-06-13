@@ -12,10 +12,10 @@ Mappings:
       SystemDiskSize: 2048
       MaxModelLen: 12784
       ECSImage: deepseek_v3
-    deepseek-ai/DeepSeek-R1-0518:
+    deepseek-ai/DeepSeek-R1-0528:
       SystemDiskSize: 1000
       MaxModelLen: 12784
-      ECSImage: deepseek_r1_0518
+      ECSImage: deepseek_r1_0528
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -169,14 +169,14 @@ Parameters:
     Label:
       en: Model Name
       zh-cn: 模型名称
-    Default: "deepseek-ai/DeepSeek-R1-0518"
+    Default: "deepseek-ai/DeepSeek-R1-0528"
     AllowedValues:
-      - deepseek-ai/DeepSeek-R1-0518
+      - deepseek-ai/DeepSeek-R1-0528
       - deepseek-ai/DeepSeek-R1
       - deepseek-ai/DeepSeek-V3
     AssociationPropertyMetadata:
       ValueLabelMapping:
-        "deepseek-ai/DeepSeek-R1-0518": DeepSeek-R1-0518
+        "deepseek-ai/DeepSeek-R1-0528": DeepSeek-R1-0528
         "deepseek-ai/DeepSeek-R1": DeepSeek-R1
         "deepseek-ai/DeepSeek-V3": DeepSeek-V3
     Description:
@@ -222,7 +222,7 @@ Parameters:
         - Condition:
             Fn::Equals:
               - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1-0518
+              - deepseek-ai/DeepSeek-R1-0528
           Value:
             - ecs.ebmgn8v.48xlarge
         - Condition:
