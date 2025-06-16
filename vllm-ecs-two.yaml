@@ -340,7 +340,7 @@ Resources:
           - Ref: EcsVpc
           - Ref: VpcId
       SecurityGroupIngress:
-        - PortRange: 8080/8080
+        - PortRange: 8000/8000
           Priority: 1
           SourceCidrIp: 0.0.0.0/0
           IpProtocol: tcp
@@ -548,7 +548,7 @@ Resources:
             --max-model-len ${MaxModelLen} \
             --enable-chunked-prefill \
             --host=0.0.0.0 \
-            --port 8080 \
+            --port 8000 \
             --trust-remote-code \
             --api-key "${VLLM_API_KEY}" \
             --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
@@ -611,7 +611,7 @@ Outputs:
       en: Internal Address
     Value:
       Fn::Sub:
-        - 'http://${Endpoint}:8080/v1'
+        - 'http://${Endpoint}:8000/v1'
         - Endpoint:
             Fn::Select:
               - '0'
@@ -626,7 +626,7 @@ Outputs:
       Fn::If:
         - PublicAccessConditions
         - Fn::Sub:
-            - 'http://${Endpoint}:8080/v1'
+            - 'http://${Endpoint}:8000/v1'
             - Endpoint:
                 Fn::Select:
                   - '0'
@@ -664,7 +664,7 @@ Outputs:
             Fn::If:
               - PublicAccessConditions
               - Fn::Sub:
-                  - 'http://${Endpoint}:8080/v1'
+                  - 'http://${Endpoint}:8000/v1'
                   - Endpoint:
                       Fn::Select:
                         - '0'
@@ -672,7 +672,7 @@ Outputs:
                             - WorkerInstanceGroup
                             - PublicIps
               - Fn::Sub:
-                  - 'http://${Endpoint}:8080/v1'
+                  - 'http://${Endpoint}:8000/v1'
                   - Endpoint:
                       Fn::Select:
                         - '0'
