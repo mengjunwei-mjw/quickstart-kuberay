@@ -595,7 +595,7 @@ Outputs:
       en: Model Name
     Value:
       Ref: ModelName
-  Api_Key:
+  ApiKey:
     NoEcho: true
     Label: API Key
     Value:
