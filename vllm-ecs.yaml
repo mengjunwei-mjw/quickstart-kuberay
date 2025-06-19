@@ -169,42 +169,13 @@ Conditions:
           - Ref: ModelName
           - VllmVersion
   IsVLModel:
-    Fn::Or:
-      - Fn::Equals:
-          - 'Qwen/Qwen2.5-VL-72B-Instruct'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen2.5-VL-32B-Instruct'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen2.5-VL-7B-Instruct'
-          - Ref: ModelName
+    Fn::Equals:
+      - 'Qwen-VL'
+      - Ref: ModelType
   IsQwen3:
-    Fn::Or:
-      - Fn::Equals:
-          - 'Qwen/Qwen3-32B'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-32B-FP8'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-30B-A3B'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-30B-A3B-FP8'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-235B-A22B'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-235B-A22B-FP8'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-8B'
-          - Ref: ModelName
-      - Fn::Equals:
-          - 'Qwen/Qwen3-14B'
-          - Ref: ModelName
+    Fn::Equals:
+      - 'Qwen3'
+      - Ref: ModelType
   IsFP8Model:
     Fn::Equals:
       - 8
@@ -354,10 +325,12 @@ Parameters:
     Label:
       en: Model Type
       zh-cn: 模型系列
-    Default: "Qwen"
+    Default: "Qwen3"
     AllowedValues:
-      - Qwen
+      - Qwen3
+      - Qwen2.5
       - Qwen-VL
+      - QwQ
       - Deepseek
       - Cosmos
   ModelName:
@@ -389,7 +362,7 @@ Parameters:
       AllowedValues:
         - Condition:
             Fn::Equals:
-              - 'Qwen'
+              - 'Qwen3'
               - ${ModelType}
           Value:
             - Qwen/Qwen3-8B
@@ -400,7 +373,11 @@ Parameters:
             - Qwen/Qwen3-30B-A3B-FP8
             - Qwen/Qwen3-32B-FP8
             - Qwen/Qwen3-235B-A22B-FP8
-            - Qwen/QwQ-32B
+        - Condition:
+            Fn::Equals:
+              - 'Qwen2.5'
+              - ${ModelType}
+          Value:
             - Qwen/Qwen2.5-32B-Instruct
         - Condition:
             Fn::Equals:
@@ -410,6 +387,12 @@ Parameters:
             - Qwen/Qwen2.5-VL-7B-Instruct
             - Qwen/Qwen2.5-VL-32B-Instruct
             - Qwen/Qwen2.5-VL-72B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'QwQ'
+              - ${ModelType}
+          Value:
+            - Qwen/QwQ-32B
         - Condition:
             Fn::Equals:
               - 'Deepseek'
@@ -966,11 +949,6 @@ Outputs:
             - Fn::GetAtt:
                 - InstanceGroup
                 - PublicIps
-  在钉钉或微信对话您的大模型:
-    Label:
-      zh-ch: 在钉钉或微信对话您的大模型
-      en: Chat with your LLM in DingTalk or WeChat
-    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/flow/fastTemplate/collection/tl-c3597861185a4053b207
   Api调用示例:
     Label:
       zh-ch: Api调用示例
