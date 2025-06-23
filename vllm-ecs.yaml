@@ -12,14 +12,30 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
       ECSImage: qwq_32b
+    Qwen/Qwen2.5-72B-Instruct:
+      SystemDiskSize: 300
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen_2_5_72b
     Qwen/Qwen2.5-32B-Instruct:
       SystemDiskSize: 200
-      MaxModelLen: 16384
-      VllmVersion: 0.7.2
-      GpuMemory: 0.98
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen_2_5_32b
+    Qwen/Qwen2.5-7B-Instruct:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.7.2
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen_2_5_7b
     Qwen/Qwen3-32B:
       SystemDiskSize: 300
       MaxModelLen: 16384
@@ -142,9 +158,9 @@ Mappings:
       ECSImage: qwen2_5_vl_32b
     Qwen/Qwen2.5-VL-72B-Instruct:
       SystemDiskSize: 350
-      MaxModelLen: 16384
+      MaxModelLen: 4096
       VllmVersion: 0.8.5
-      GpuMemory: 0.92
+      GpuMemory: 0.9
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen2_5_vl_72b
@@ -349,7 +365,9 @@ Parameters:
       - Qwen/Qwen3-32B-FP8
       - Qwen/Qwen3-235B-A22B-FP8
       - Qwen/QwQ-32B
+      - Qwen/Qwen2.5-7B-Instruct
       - Qwen/Qwen2.5-32B-Instruct
+      - Qwen/Qwen2.5-72B-Instruct
       - Qwen/Qwen2.5-VL-7B-Instruct
       - Qwen/Qwen2.5-VL-32B-Instruct
       - Qwen/Qwen2.5-VL-72B-Instruct
@@ -378,7 +396,9 @@ Parameters:
               - 'Qwen2.5'
               - ${ModelType}
           Value:
+            - Qwen/Qwen2.5-7B-Instruct
             - Qwen/Qwen2.5-32B-Instruct
+            - Qwen/Qwen2.5-72B-Instruct
         - Condition:
             Fn::Equals:
               - 'Qwen-VL'
@@ -415,7 +435,9 @@ Parameters:
         "Qwen/Qwen3-32B": Qwen3-32B
         "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
         "Qwen/QwQ-32B": QwQ-32B
+        "Qwen/Qwen2.5-7B-Instruct": Qwen2.5-7B-Instruct
         "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
+        "Qwen/Qwen2.5-72B-Instruct": Qwen2.5-72B-Instruct
         "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
         "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
         "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
@@ -456,6 +478,9 @@ Parameters:
                   - ${ModelName}
               - Fn::Equals:
                   - 'Qwen/Qwen3-8B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-7B-Instruct'
                   - ${ModelName}
               - Fn::Equals:
                   - 'Qwen/Qwen2.5-VL-7B-Instruct'
@@ -548,6 +573,9 @@ Parameters:
                   - ${ModelName}
               - Fn::Equals:
                   - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-72B-Instruct'
                   - ${ModelName}
               - Fn::Equals:
                   - 'Qwen/Qwen2.5-VL-72B-Instruct'
