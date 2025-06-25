@@ -19,7 +19,7 @@ Mappings:
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
-      - public
+      - true
       - Ref: PublicAccessOption
   CreateVpcConditions:
     Fn::Equals:
@@ -35,23 +35,18 @@ Conditions:
       - Ref: ModelName
 Parameters:
   PublicAccessOption:
-    Type: String
-    AllowedValues:
-      - public
-      - private
-    AssociationPropertyMetadata:
-      ValueLabelMapping:
-        public:
-          zh-cn: 开启公网访问
-          en: True
-        private:
-          zh-cn: 不开启公网访问
-          en: False
+    Type: Boolean
     Label:
-      en: Select open or close public network
-      zh-cn: 选择是否开启公网访问
+      zh-cn: 支持公网访问
+      en: Support Public Access
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - "Qwen-VL"
+              - ${ModelType}
     Required: true
-    Default: private
   VpcOption:
     Type: String
     AllowedValues:

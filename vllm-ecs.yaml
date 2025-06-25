@@ -171,7 +171,7 @@ Conditions:
           - 'Qwen-VL'
           - Ref: ModelType
       - Fn::Equals:
-          - public
+          - true
           - Ref: PublicAccessOption
   CreateVpcConditions:
     Fn::Equals:
@@ -201,10 +201,10 @@ Conditions:
           - Quantization
 Parameters:
   PublicAccessOption:
-    Type: String
-    AllowedValues:
-      - public
-      - private
+    Type: Boolean
+    Label:
+      zh-cn: 支持公网访问
+      en: Support Public Access
     AssociationPropertyMetadata:
       Visible:
         Condition:
@@ -212,18 +212,7 @@ Parameters:
             Fn::Equals:
               - "Qwen-VL"
               - ${ModelType}
-      ValueLabelMapping:
-        public:
-          zh-cn: 开启公网访问
-          en: True
-        private:
-          zh-cn: 不开启公网访问
-          en: False
-    Label:
-      en: Select open or close public network
-      zh-cn: 选择是否开启公网访问
     Required: true
-    Default: private
   VpcOption:
     Type: String
     AllowedValues:
