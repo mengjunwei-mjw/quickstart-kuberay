@@ -652,22 +652,6 @@ Parameters:
             - Fn::Equals:
                 - 'Qwen/Qwen3-235B-A22B'
                 - ${ModelName}
-  InstancePassword:
-    NoEcho: true
-    Type: String
-    Description:
-      en: Server login password, Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
-      zh-cn: 服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
-    AllowedPattern: '^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$'
-    Label:
-      en: Instance Password
-      zh-cn: 实例密码
-    ConstraintDescription:
-      en: Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
-      zh-cn: 长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
-    MinLength: 8
-    MaxLength: 30
-    AssociationProperty: ALIYUN::ECS::Instance::Password
   ZoneId:
     Type: String
     Label:
@@ -744,6 +728,19 @@ Resources:
           min: 1
         - class: digits
           min: 1
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
   SecurityGroup:
     Type: ALIYUN::ECS::SecurityGroup
     Properties:
@@ -794,7 +791,9 @@ Resources:
           - Ref: ModelName
           - ECSImage
       Password:
-        Ref: InstancePassword
+        Fn::GetAtt:
+          - RandomPassword
+          - value
       InstanceType:
         Ref: EcsInstanceType
       NetworkType: vpc
@@ -966,6 +965,18 @@ Outputs:
             - Fn::GetAtt:
                 - InstanceGroup
                 - PublicIps
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
   Api调用示例:
     Label:
       zh-ch: Api调用示例
@@ -1062,7 +1073,6 @@ Metadata:
           - ModelName
           - WhitelistConfirmation
           - EcsInstanceType
-          - InstancePassword
         Label:
           zh-cn: 资源配置
           en: Resource Configuration
