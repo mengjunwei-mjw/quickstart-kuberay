@@ -686,15 +686,15 @@ Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
       - Parameters:
+          - WhitelistConfirmation
+        Label:
+          zh-cn: 白名单配置
+          en: Whitelist Configuration
+      - Parameters:
+          - ModelName
           - PayType
           - PayPeriodUnit
           - PayPeriod
-        Label:
-          zh-cn: 付费类型配置
-          en: Payment Type Configuration
-      - Parameters:
-          - ModelName
-          - WhitelistConfirmation
           - EcsInstanceType
         Label:
           zh-cn: 资源配置
@@ -708,5 +708,5 @@ Metadata:
           - VSwitchCidrBlock
           - PublicAccessOption
         Label:
-          zh-cn: 可用区配置
-          en: Availability Zone Configuration
+          zh-cn: 网络配置
+          en: Network Configuration
