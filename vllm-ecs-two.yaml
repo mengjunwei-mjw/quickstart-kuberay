@@ -601,6 +601,11 @@ Outputs:
           - Fn::GetAtt:
               - RandomApiKey
               - value
+  Web应用:
+    Label:
+      zh-ch: Web应用
+      en: Web Application
+    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}
   内网地址:
     Label:
       zh-ch: 内网地址

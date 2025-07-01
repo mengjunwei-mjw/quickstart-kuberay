@@ -90,7 +90,7 @@ Mappings:
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_8b
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
       SystemDiskSize: 300
@@ -932,6 +932,11 @@ Outputs:
           - Fn::GetAtt:
               - RandomApiKey
               - value
+  Web应用:
+    Label:
+      zh-ch: Web应用
+      en: Web Application
+    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}
   内网地址:
     Label:
       zh-ch: 内网地址

@@ -19,6 +19,27 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ''
+  RepoType:
+    Type: String
+    Label:
+      en: Repository type
+      zh-cn: 仓库类型
+    AllowedValues:
+      - Sample
+      - Public
+      - Private
+    Default: Sample
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        Sample:
+          zh-cn: 示例
+          en: Sample
+        Public:
+          zh-cn: 公开
+          en: Public
+        Private:
+          zh-cn: 私有
+          en: Private
   ArtifactSourceType:
     Type: String
     Default: Dockerfile
@@ -26,14 +47,20 @@ Parameters:
       en: artifact source type
       zh-cn: 部署类型
     AllowedValues:
-      - 'Dockerfile'
-      - 'Buildpacks'
+      - Dockerfile
+      - Buildpacks
     AssociationPropertyMetadata:
       AutoSelectFirst: true
       ForceRadio: true
       ValueLabelMapping:
-        Dockerfile: "Dockerfile"
-        Buildpacks: "Buildpacks"
+        Dockerfile: Dockerfile
+        Buildpacks: Buildpacks
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - Sample
+              - ${RepoType}
   DockerfilePath:
     Type: String
     Label:
@@ -42,15 +69,19 @@ Parameters:
     Description:
       en: The path of the repository where the Dockerfile is located.
       zh-cn: 指定 Dockerfile 路径，路径应当为基于源仓库的相对路径。
-    Default: 'Dockerfile'
+    Default: Dockerfile
     AssociationProperty: ALIYUN::OOS::GitContent::Content
     AssociationPropertyMetadata:
       Visible:
         Condition:
           Fn::And:
             - Fn::Equals:
-                - '${ArtifactSourceType}'
+                - ${ArtifactSourceType}
                 - Dockerfile
+            - Fn::Not:
+                Fn::Equals:
+                  - Sample
+                  - ${RepoType}
   AdvancedOptions:
     Type: Boolean
     Default: false
@@ -60,6 +91,13 @@ Parameters:
     Description:
       en: Advanced options. Such as setting environment variables or specifying image build parameters.
       zh-cn: 高级选项。如设置环境变量或指定构建镜像构建参数
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - Sample
+              - ${RepoType}
   BuildArgs:
     Default: []
     Label:
@@ -75,10 +113,10 @@ Parameters:
         Condition:
           Fn::And:
             - Fn::Equals:
-                - '${AdvancedOptions}'
+                - ${AdvancedOptions}
                 - true
             - Fn::Equals:
-                - '${ArtifactSourceType}'
+                - ${ArtifactSourceType}
                 - Dockerfile
       Parameters:
         Name:
@@ -107,7 +145,7 @@ Parameters:
       Visible:
         Condition:
           Fn::Equals:
-            - '${AdvancedOptions}'
+            - ${AdvancedOptions}
             - true
       Parameters:
         Name:
@@ -188,22 +226,6 @@ Parameters:
         InstanceTypeFamily:
           - ecs.u1
           - ecs.e
-  InstancePassword:
-    NoEcho: true
-    Type: String
-    Description:
-      en: Server login password, Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
-      zh-cn: 云服务器登录密码,长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
-    AllowedPattern: ^[a-zA-Z0-9-\(\)\`\~\!\@\#\$\%\^\&\*\_\-\+\=\|\{\}\[\]\:\;\<\>\,\.\?\/]*$
-    Label:
-      en: New ECS Instance Password
-      zh-cn: 实例密码
-    ConstraintDescription:
-      en: Length 8-30, must contain three(Capital letters, lowercase letters, numbers, ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ Special symbol in)
-      zh-cn: 长度8-30，必须包含三项（大写字母、小写字母、数字、 ()`~!@#$%^&*_-+=|{}[]:;'<>,.?/ 中的特殊符号）
-    MinLength: 8
-    MaxLength: 30
-    AssociationProperty: ALIYUN::ECS::Instance::Password
   SystemDiskCategory:
     Type: String
     AllowedValues:
@@ -351,6 +373,19 @@ Parameters:
             - NewVPC
             - ${VpcOption}
 Resources:
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
   VpcModule:
     Type: MODULE::ACS::ComputeNest::VpcAndVSwitch
     Version: default
@@ -398,8 +433,7 @@ Resources:
         Ref: ChargeType
       SecurityGroupId:
         Ref: EcsSecurityGroup
-      SystemDiskCategory:
-        Ref: SystemDiskCategory
+      SystemDiskCategory: cloud_essd
       SystemDiskSize:
         Ref: SystemDiskSize
       ImageId: '{{ resolve:oos:aliyun/services/computenest/images/aliyun_3_2104_docker_26 }}'
@@ -415,7 +449,9 @@ Resources:
         Ref: EcsInstanceType
       MaxAmount: 1
       Password:
-        Ref: InstancePassword
+        Fn::GetAtt:
+          - RandomPassword
+          - value
       AllocatePublicIP: true
       InternetMaxBandwidthOut:
         Ref: InternetMaxBandwidthOut
@@ -515,6 +551,18 @@ Outputs:
                   - InstanceIds
           RegionId:
             Ref: ALIYUN::Region
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
 Mappings: {}
 Metadata:
   ALIYUN::ROS::Interface:
@@ -528,7 +576,6 @@ Metadata:
           - ChargeType
           - PeriodUnit
           - Period
-          - InstancePassword
           - Port
         Label: ''
       - Parameters:
@@ -557,6 +604,7 @@ Metadata:
           - AcrPassword
           - Branch
           - CommitHash
+          - RepoType
         Label: ''
     Hidden:
       - ImagePullPath
@@ -564,6 +612,7 @@ Metadata:
       - AcrPassword
       - Branch
       - CommitHash
+      - RepoType
     QuickDeployConfig:
       PackageFields:
         - Key: EcsInstanceType
@@ -588,6 +637,24 @@ Metadata:
             en: Pay Period
           Value: '${PayPeriod} ${PayPeriodUnit}'
       PredefinedParameters:
+        - Name: ECS新用户试用套餐
+          CommodityId: 10000011871
+          Parameters:
+            EcsInstanceType: ecs.u1-c1m1.large
+            SystemDiskCategory: cloud_essd_entry
+            SystemDiskSize: 40
+            PayType: PostPaid
+            InternetChargeType: PayByTraffic
+            InternetMaxBandwidthOut: 1
+          OrderList:
+            - EcsInstanceType
+            - SystemDiskCategory
+            - SystemDiskSize
+            - InternetChargeType
+            - InternetMaxBandwidthOut
+            - PayType
+          Type: Normal
+          Description: 云服务器ECS免费试用（个人版）,专为ECS新用户打造，提供300元免费额度。
         - Name: 热卖套餐，特价99元/年（限购1台）
           Parameters:
             EcsInstanceType: ecs.e-c1m1.large
@@ -623,8 +690,6 @@ Metadata:
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PayPeriodUnit
-            - PayPeriod
             - PayType
           Type: Normal
           Description: 可用300元学生专属代金券抵扣！<a href="https://university.aliyun.com" target="_blank">立即领取</a>
