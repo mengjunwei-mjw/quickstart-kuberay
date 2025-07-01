@@ -3,6 +3,26 @@ Description:
   zh-cn: 从镜像仓库部署单机容器应用
   en: Deploy container application from image registry
 Parameters:
+  ActivityType:
+    Type: String
+    ReadOnly: true
+    Default: normal
+    AllowedValues:
+      - free_trier_for_ecs
+      - normal
+    Label:
+      en: Type of Instance
+      zh-cn: 实例类型
+    AssociationPropertyMetadata:
+      AutoChangeType: true
+      AutoSelectFirst: true
+      ValueLabelMapping:
+        free_trier_for_ecs:
+          zh-cn: 创建试用ECS实例
+          en: Free ECS Instance
+        normal:
+          zh-cn: 创建普通ECS实例
+          en: Normal ECS Instance
   Branch:
     Type: String
     Default: ''
@@ -421,6 +441,8 @@ Resources:
   EcsInstanceGroup:
     Type: ALIYUN::ECS::InstanceGroup
     Properties:
+      ActivityType:
+        Ref: ActivityType
       UpdatePolicy: ForAllInstances
       IoOptimized: optimized
       ZoneId:
@@ -613,6 +635,7 @@ Metadata:
       - Branch
       - CommitHash
       - RepoType
+      - ActivityType
     QuickDeployConfig:
       PackageFields:
         - Key: EcsInstanceType
@@ -626,16 +649,16 @@ Metadata:
             zh-cn: 公网带宽
             en: Internet Charge Type
           Value: '${InternetChargeType } / ${InternetMaxBandwidthOut} Mbps'
-        - Key: PayType
+        - Key: ChargeType
           Label:
             zh-cn: 付费类型
             en: Pay Type
-          Value: '${PayType}'
-        - Key: PayPeriodUnit
+          Value: '${ChargeType}'
+        - Key: PeriodUnit
           Label:
             zh-cn: 付费时长
             en: Pay Period
-          Value: '${PayPeriod} ${PayPeriodUnit}'
+          Value: '${Period} ${PeriodUnit}'
       PredefinedParameters:
         - Name: ECS新用户试用套餐
           CommodityId: 10000011871
@@ -643,16 +666,17 @@ Metadata:
             EcsInstanceType: ecs.u1-c1m1.large
             SystemDiskCategory: cloud_essd_entry
             SystemDiskSize: 40
-            PayType: PostPaid
+            ChargeType: PostPaid
             InternetChargeType: PayByTraffic
             InternetMaxBandwidthOut: 1
+            ActivityType: free_trier_for_ecs
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PayType
+            - ChargeType
           Type: Normal
           Description: 云服务器ECS免费试用（个人版）,专为ECS新用户打造，提供300元免费额度。
         - Name: 热卖套餐，特价99元/年（限购1台）
@@ -662,18 +686,18 @@ Metadata:
             SystemDiskSize: 40
             InternetChargeType: PayByBandwidth
             InternetMaxBandwidthOut: 3
-            PayPeriodUnit: Month
-            PayPeriod: 12
-            PayType: PrePaid
+            PeriodUnit: Month
+            Period: 12
+            ChargeType: PrePaid
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PayPeriodUnit
-            - PayPeriod
-            - PayType
+            - PeriodUnit
+            - Period
+            - ChargeType
           Type: Normal
           Description: 固定带宽不限流量，新老同享，上云首选！
         - Name: 尝鲜套餐，只需0.3元/小时
@@ -683,33 +707,33 @@ Metadata:
             SystemDiskSize: 40
             InternetChargeType: PayByTraffic
             InternetMaxBandwidthOut: 3
-            PayType: PostPaid
+            ChargeType: PostPaid
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PayType
+            - ChargeType
           Type: Normal
           Description: 可用300元学生专属代金券抵扣！<a href="https://university.aliyun.com" target="_blank">立即领取</a>
         - Name: 自定义套餐
-          Parameters: { }
+          Parameters: {}
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PayPeriodUnit
-            - PayPeriod
-            - PayType
+            - PeriodUnit
+            - Period
+            - ChargeType
           Type: Custom
       EnableCustom: true
       CustomFields:
         - Key: Port
       CostRelatedKeys:
         - RegionId
-        - PayPeriod
+        - Period
       AutomaticZone:
         ZoneIdKey: ZoneId
