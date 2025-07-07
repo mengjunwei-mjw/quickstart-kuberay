@@ -173,7 +173,7 @@ Parameters:
         Value:
           Type: String
     Default: []
-  ChargeType:
+  PayType:
     Label:
       zh-cn: 付费类型
       en: Pay type
@@ -184,15 +184,15 @@ Parameters:
     Default: PostPaid
     AssociationProperty: ChargeType
     AssociationPropertyMetadata:
-      LocaleKey: ChargeType
-  PeriodUnit:
+      LocaleKey: InstanceChargeType
+  PayPeriodUnit:
     AssociationProperty: PayPeriodUnit
     AssociationPropertyMetadata:
       Visible:
         Condition:
           Fn::Not:
             Fn::Equals:
-              - ${ChargeType}
+              - ${PayType}
               - PostPaid
     Default: Month
     AllowedValues:
@@ -201,14 +201,14 @@ Parameters:
       zh-cn: 购买资源周期
       en: Pay period unit
     Type: String
-  Period:
+  PayPeriod:
     AssociationProperty: PayPeriod
     AssociationPropertyMetadata:
       Visible:
         Condition:
           Fn::Not:
             Fn::Equals:
-              - ${ChargeType}
+              - ${PayType}
               - PostPaid
     Default: 1
     Label:
@@ -240,7 +240,7 @@ Parameters:
       en: Please refer to <a href='https://www.alibabacloud.com/help/en/ecs/use-cases/best-practices-for-instance-type-selection' target='_blank'>Best practices for selecting ECS instance types</a>
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
-      InstanceChargeType: ${ChargeType}
+      InstanceChargeType: ${PayType}
       ZoneId: ${ZoneId}
       Constraints:
         InstanceTypeFamily:
@@ -305,7 +305,7 @@ Parameters:
       en: Zone
     AssociationProperty: ALIYUN::ECS::Instance::ZoneId
     AssociationPropertyMetadata:
-      InstanceChargeType: ${ChargeType}
+      InstanceChargeType: ${PayType}
       SystemDiskCategory: ${SystemDiskCategory}
       InstanceType: ${EcsInstanceType}
       DefaultValueStrategy: first
@@ -439,42 +439,40 @@ Resources:
           PortRange:
             Fn::Sub: ${Port}/${Port}
   EcsInstanceGroup:
-    Type: ALIYUN::ECS::InstanceGroup
+    Type: MODULE::SHARE::1853370294850618::ECSInstance
+    Version: default
     Properties:
       ActivityType:
         Ref: ActivityType
-      UpdatePolicy: ForAllInstances
-      IoOptimized: optimized
       ZoneId:
         Ref: ZoneId
       VpcId:
         Fn::GetAtt:
           - VpcModule
           - VpcId
-      InstanceChargeType:
-        Ref: ChargeType
+      PayType:
+        Ref: PayType
       SecurityGroupId:
         Ref: EcsSecurityGroup
-      SystemDiskCategory: cloud_essd
+      SystemDiskCategory:
+        Ref: SystemDiskCategory
       SystemDiskSize:
         Ref: SystemDiskSize
       ImageId: '{{ resolve:oos:aliyun/services/computenest/images/aliyun_3_2104_docker_26 }}'
-      PeriodUnit:
-        Ref: PeriodUnit
+      PayPeriodUnit:
+        Ref: PayPeriodUnit
       VSwitchId:
         Fn::GetAtt:
           - VpcModule
           - VSwitchId
-      Period:
-        Ref: Period
+      PayPeriod:
+        Ref: PayPeriod
       InstanceType:
         Ref: EcsInstanceType
-      MaxAmount: 1
       Password:
         Fn::GetAtt:
           - RandomPassword
           - value
-      AllocatePublicIP: true
       InternetMaxBandwidthOut:
         Ref: InternetMaxBandwidthOut
       InternetChargeType:
@@ -534,9 +532,9 @@ Resources:
           systemctl start aliyun-applicationmanager
       Type: RunShellScript
       InstanceIds:
-        Fn::GetAtt:
-          - EcsInstanceGroup
-          - InstanceIds
+        - Fn::GetAtt:
+            - EcsInstanceGroup
+            - InstanceId
       Timeout: '600'
 Outputs:
   endpoint:
@@ -550,11 +548,9 @@ Outputs:
       Fn::Sub:
         - http://${ServerAddress}:${Port}
         - ServerAddress:
-            Fn::Select:
-              - 0
-              - Fn::GetAtt:
-                  - EcsInstanceGroup
-                  - PublicIps
+            Fn::GetAtt:
+              - EcsInstanceGroup
+              - PublicIp
   connectServer:
     Label:
       zh-cn: 远程连接云服务器
@@ -566,11 +562,9 @@ Outputs:
       Fn::Sub:
         - https://ecs-workbench.aliyun.com/?from=ecs&instanceType=ecs&regionId=${RegionId}&instanceId=${InstanceId}
         - InstanceId:
-            Fn::Select:
-              - 0
-              - Fn::GetAtt:
-                  - EcsInstanceGroup
-                  - InstanceIds
+            Fn::GetAtt:
+              - EcsInstanceGroup
+              - InstanceId
           RegionId:
             Ref: ALIYUN::Region
   InstancePassword:
@@ -595,9 +589,9 @@ Metadata:
           - SystemDiskSize
           - InternetChargeType
           - InternetMaxBandwidthOut
-          - ChargeType
-          - PeriodUnit
-          - Period
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
           - Port
         Label: ''
       - Parameters:
@@ -649,16 +643,16 @@ Metadata:
             zh-cn: 公网带宽
             en: Internet Charge Type
           Value: '${InternetChargeType } / ${InternetMaxBandwidthOut} Mbps'
-        - Key: ChargeType
+        - Key: PayType
           Label:
             zh-cn: 付费类型
             en: Pay Type
-          Value: '${ChargeType}'
-        - Key: PeriodUnit
+          Value: '${PayType}'
+        - Key: PayPeriodUnit
           Label:
             zh-cn: 付费时长
             en: Pay Period
-          Value: '${Period} ${PeriodUnit}'
+          Value: '${PayPeriod} ${PayPeriodUnit}'
       PredefinedParameters:
         - Name: ECS新用户试用套餐
           CommodityId: 10000011871
@@ -666,7 +660,7 @@ Metadata:
             EcsInstanceType: ecs.u1-c1m1.large
             SystemDiskCategory: cloud_essd_entry
             SystemDiskSize: 40
-            ChargeType: PostPaid
+            PayType: PostPaid
             InternetChargeType: PayByTraffic
             InternetMaxBandwidthOut: 1
             ActivityType: free_trier_for_ecs
@@ -676,7 +670,7 @@ Metadata:
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - ChargeType
+            - PayType
           Type: Normal
           Description: 云服务器ECS免费试用（个人版）,专为ECS新用户打造，提供300元免费额度。
         - Name: 热卖套餐，特价99元/年（限购1台）
@@ -686,18 +680,18 @@ Metadata:
             SystemDiskSize: 40
             InternetChargeType: PayByBandwidth
             InternetMaxBandwidthOut: 3
-            PeriodUnit: Month
-            Period: 12
-            ChargeType: PrePaid
+            PayPeriodUnit: Month
+            PayPeriod: 12
+            PayType: PrePaid
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PeriodUnit
-            - Period
-            - ChargeType
+            - PayPeriodUnit
+            - PayPeriod
+            - PayType
           Type: Normal
           Description: 固定带宽不限流量，新老同享，上云首选！
         - Name: 尝鲜套餐，只需0.3元/小时
@@ -705,16 +699,16 @@ Metadata:
             EcsInstanceType: ecs.e-c1m1.large
             SystemDiskCategory: cloud_essd_entry
             SystemDiskSize: 40
-            InternetChargeType: PayByTraffic
+            InternetChargeType: PayByBandwidth
             InternetMaxBandwidthOut: 3
-            ChargeType: PostPaid
+            PayType: PostPaid
           OrderList:
             - EcsInstanceType
             - SystemDiskCategory
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - ChargeType
+            - PayType
           Type: Normal
           Description: 可用300元学生专属代金券抵扣！<a href="https://university.aliyun.com" target="_blank">立即领取</a>
         - Name: 自定义套餐
@@ -725,15 +719,15 @@ Metadata:
             - SystemDiskSize
             - InternetChargeType
             - InternetMaxBandwidthOut
-            - PeriodUnit
-            - Period
-            - ChargeType
+            - PayPeriodUnit
+            - PayPeriod
+            - PayType
           Type: Custom
       EnableCustom: true
       CustomFields:
         - Key: Port
       CostRelatedKeys:
         - RegionId
-        - Period
+        - PayPeriod
       AutomaticZone:
         ZoneIdKey: ZoneId
