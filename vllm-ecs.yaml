@@ -625,11 +625,11 @@ Parameters:
       Description:
         zh-cn: |
           <strong>重要前置条件：</strong>
-          此模型需要L20或H20卡才可部署。使用此模型前，请确保已申请L20或H20实例规格。如未申请，请联系客服、销售或提交工单加白。
+          此模型需要L20或GU8TF卡才可部署。使用此模型前，请确保已申请L20或GU8TF实例规格。如未申请，请联系客服、销售或提交工单加白。
           <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
         en: |
           <strong>Important Preconditions:</strong>
-          This model requires an L20 or H20 card to deploy. Before using this model, please make sure you have applied for an L20 or H20 instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
+          This model requires an L20 or GU8TF card to deploy. Before using this model, please make sure you have applied for an L20 or GU8TF instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
           <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
       ConfirmText:
         zh-cn: "我已确认完成白名单配置"
