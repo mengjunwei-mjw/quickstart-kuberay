@@ -1600,12 +1600,7 @@ Resources:
           - - Ref: ALIYUN::StackName
             - '[1,4]'
       IoOptimized: optimized
-      InstanceChargeType:
-        Ref: PayType
-      PeriodUnit:
-        Ref: PayPeriodUnit
-      Period:
-        Ref: PayPeriod
+      InstanceChargeType: PostPaid
       VpcId:
         Ref: Vpc
       VSwitchId:

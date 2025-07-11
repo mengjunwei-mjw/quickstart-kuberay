@@ -174,9 +174,6 @@ Parameters:
         "deepseek-ai/DeepSeek-R1-0528": DeepSeek-R1-0528
         "deepseek-ai/DeepSeek-R1": DeepSeek-R1
         "deepseek-ai/DeepSeek-V3": DeepSeek-V3
-    Description:
-      zh-cn: DeepSeek-R1_671B和DeepSeek-V3模型需要h20实例规格，部署前请提交工单申请h20购买规格。
-      en: DeepSeek-R1_671B and DeepSeek-V3 models need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
   WhitelistConfirmation:
     Type: String
     Label:
@@ -206,9 +203,6 @@ Parameters:
     Label:
       en: Instance Type
       zh-cn: 实例类型
-    Description:
-      zh-cn: DeepSeek-R1和DeepSeek-V3需要h20实例规格，部署前请提交工单申请h20购买规格。
-      en: DeepSeek-R1 and DeepSeek-V3 need h20 instance specifications, please submit a ticket to apply for the purchase of h20 specifications.
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
