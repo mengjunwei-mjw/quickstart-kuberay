@@ -595,11 +595,11 @@ Outputs:
           - Fn::GetAtt:
               - RandomApiKey
               - value
-  Web应用:
+  在线访问:
     Label:
-      zh-ch: Web应用
-      en: Web Application
-    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}
+      zh-ch: 在线访问
+      en: Online Visit
+    Value: '<a href="https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}"> 访问链接 </a>'
   内网地址:
     Label:
       zh-ch: 内网地址

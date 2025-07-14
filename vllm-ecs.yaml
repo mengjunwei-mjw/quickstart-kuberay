@@ -199,6 +199,14 @@ Conditions:
           - ModelMap
           - Ref: ModelName
           - Quantization
+  IsDefaultDockerImage:
+    Fn::Equals:
+      - ''
+      - Ref: DockerImage
+  IsDefaultScript:
+    Fn::Equals:
+      - ''
+      - Ref: Script
 Parameters:
   PublicAccessOption:
     Type: Boolean
@@ -506,6 +514,7 @@ Parameters:
             - ecs.gn7s-c48g1.12xlarge
             - ecs.gn7s-c16g1.4xlarge
             - ecs.gn7s-c56g1.14xlarge
+            - ecs.ebmgn9t.48xlarge
         - Condition:
             Fn::Equals:
               - 'Qwen/Qwen3-14B'
@@ -696,6 +705,12 @@ Parameters:
           Fn::Equals:
             - ExistingVPC
             - ${VpcOption}
+  DockerImage:
+    Type: String
+    Default: ''
+  Script:
+    Type: String
+    Default: ''
 Resources:
   # 新建vpc
   EcsVpc:
@@ -826,25 +841,37 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            docker run -d -t --net=host --gpus all \
-            --entrypoint /bin/bash \
-            --privileged \
-            --ipc=host \
-            --name vllm \
-            -v /root:/root \
-            ${DockerImage} \
-            -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
-            export NCCL_SOCKET_IFNAME=eth0 &&
-            vllm serve /root/llm-model/${ModelName} \
-            --served-model-name ${ModelName} \
-            --gpu-memory-utilization ${GpuMemory} \
-            --max-model-len ${MaxModelLen} \
-            --enable-chunked-prefill \
-            --host=0.0.0.0 \
-            --port 8000 \
-            --trust-remote-code \
-            --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Qwen3Parameters}${Quantization}${VLParameters}"
+            if [ -z "${Script}" ]; then
+              docker run -d -t --net=host --gpus all \
+              --entrypoint /bin/bash \
+              --privileged \
+              --ipc=host \
+              --name vllm \
+              -v /root:/root \
+              ${DockerImage} \
+              -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 &&
+              vllm serve /root/llm-model/${ModelName} \
+              --served-model-name ${ModelName} \
+              --gpu-memory-utilization ${GpuMemory} \
+              --max-model-len ${MaxModelLen} \
+              --enable-chunked-prefill \
+              --host=0.0.0.0 \
+              --port 8000 \
+              --trust-remote-code \
+              --api-key "${VLLM_API_KEY}" \
+              --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Qwen3Parameters}${Quantization}${VLParameters}"
+            else
+              docker run -d -t --net=host --gpus all \
+              --entrypoint /bin/bash \
+              --privileged \
+              --ipc=host \
+              --name vllm \
+              -v /root:/root \
+              ${DockerImage} \
+              -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 && ${Script}"
+            fi
 
             MAX_TIMEOUT=3000
             INTERVAL=10
@@ -901,10 +928,15 @@ Resources:
                 - ' --quantization fp8'
                 - ''
             DockerImage:
-              Fn::FindInMap:
-                - ModelMap
-                - Ref: ModelName
-                - DockerImage
+              Fn::If:
+                - IsDefaultDockerImage
+                - Fn::FindInMap:
+                    - ModelMap
+                    - Ref: ModelName
+                    - DockerImage
+                - Ref: DockerImage
+            Script:
+              Ref: Script
             InstallVLPackage:
               Fn::If:
                 - IsVLModel
@@ -932,11 +964,11 @@ Outputs:
           - Fn::GetAtt:
               - RandomApiKey
               - value
-  Web应用:
+  在线访问:
     Label:
-      zh-ch: Web应用
-      en: Web Application
-    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}
+      zh-ch: 在线访问
+      en: Online Visit
+    Value: '<a href="https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}"> 访问链接 </a>'
   内网地址:
     Label:
       zh-ch: 内网地址
@@ -1092,3 +1124,6 @@ Metadata:
         Label:
           zh-cn: 网络配置
           en: Network Configuration
+    Hidden:
+      - DockerImage
+      - Script
