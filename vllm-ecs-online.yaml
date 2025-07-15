@@ -1,0 +1,1095 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  en: Use vllm deploy llm on ecs.
+  zh-cn: 用vllm单机部署大模型
+Mappings:
+  ModelMap:
+    Qwen/QwQ-32B:
+      SystemDiskSize: 200
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwq_32b
+    Qwen/Qwen2.5-72B-Instruct:
+      SystemDiskSize: 300
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen_2_5_72b
+    Qwen/Qwen2.5-32B-Instruct:
+      SystemDiskSize: 200
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen_2_5_32b
+    Qwen/Qwen2.5-7B-Instruct:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.7.2
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen_2_5_7b
+    Qwen/Qwen3-32B:
+      SystemDiskSize: 300
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_32b
+    Qwen/Qwen3-32B-FP8:
+      SystemDiskSize: 150
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+      Quantization: 8
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_32b_fp8
+    Qwen/Qwen3-30B-A3B:
+      SystemDiskSize: 200
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+      Quantization: 8
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_30b_a3b
+    Qwen/Qwen3-30B-A3B-FP8:
+      SystemDiskSize: 150
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.85
+      Quantization: 8
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_30b_a3b_fp8
+    Qwen/Qwen3-235B-A22B:
+      SystemDiskSize: 800
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_235b_a22b
+    Qwen/Qwen3-235B-A22B-FP8:
+      SystemDiskSize: 550
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 8
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: qwen3_235b_a22b_fp8
+    Qwen/Qwen3-8B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen3_8b
+    deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
+      SystemDiskSize: 300
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: deepseek_r1_70b
+    deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
+      SystemDiskSize: 200
+      MaxModelLen: 16384
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: deepseek_r1_32b
+    deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.7.2
+      GpuMemory: 0.98
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: deepseek_r1_7b
+    nv-community/Cosmos-Reason1-7B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      ECSImage: cosmos_r1_7b
+    Qwen/Qwen3-14B:
+      SystemDiskSize: 100
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen3_14b
+    deepseek-ai/DeepSeek-R1-0528-Qwen3-8B:
+      SystemDiskSize: 80
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: deepseek_r1_0528_8b
+    Qwen/Qwen2.5-VL-7B-Instruct:
+      SystemDiskSize: 60
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_7b
+    Qwen/Qwen2.5-VL-32B-Instruct:
+      SystemDiskSize: 160
+      MaxModelLen: 16384
+      VllmVersion: 0.8.5
+      GpuMemory: 0.92
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_32b
+    Qwen/Qwen2.5-VL-72B-Instruct:
+      SystemDiskSize: 350
+      MaxModelLen: 4096
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
+      Quantization: 16
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      ECSImage: qwen2_5_vl_72b
+Conditions:
+  PublicAccessConditions:
+    Fn::Or:
+      - Fn::Equals:
+          - 'Qwen-VL'
+          - Ref: ModelType
+      - Fn::Equals:
+          - true
+          - Ref: PublicAccessOption
+  CreateVpcConditions:
+    Fn::Equals:
+      - NewVPC
+      - Ref: VpcOption
+  VllmVersionConditions:
+    Fn::Equals:
+      - 0.7.2
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - VllmVersion
+  IsVLModel:
+    Fn::Equals:
+      - 'Qwen-VL'
+      - Ref: ModelType
+  IsQwen3:
+    Fn::Equals:
+      - 'Qwen3'
+      - Ref: ModelType
+  IsFP8Model:
+    Fn::Equals:
+      - 8
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - Quantization
+Parameters:
+  PublicAccessOption:
+    Type: Boolean
+    Label:
+      zh-cn: 支持公网访问
+      en: Support Public Access
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - "Qwen-VL"
+              - ${ModelType}
+    Required: true
+  VpcOption:
+    Type: String
+    AllowedValues:
+      - NewVPC
+      - ExistingVPC
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        NewVPC:
+          zh-cn: 新建专有网络
+          en: New VPC
+        ExistingVPC:
+          zh-cn: 已有专有网络
+          en: Existing VPC
+    Label:
+      en: Select Existing or New VPC
+      zh-cn: 选择已有/新建的专有网络
+    Required: true
+    Default: NewVPC
+  VpcCidrBlock:
+    Type: String
+    Label:
+      en: VPC CIDR IPv4 Block
+      zh-cn: 专有网络IPv4网段
+    Description:
+      zh-cn: VPC的ip地址段范围，<br>您可以使用以下的ip地址段或其子网:<br><font color='green'>[10.0.0.0/8]</font><br><font color='green'>[172.16.0.0/12]</font><br><font color='green'>[192.168.0.0/16]</font>
+      en: 'The ip address range of the VPC in the CidrBlock form; <br>You can use the following ip address ranges and their subnets: <br><font color=''green''>[10.0.0.0/8]</font><br><font color=''green''>[172.16.0.0/12]</font><br><font color=''green''>[192.168.0.0/16]</font>'
+    Default: 192.168.0.0/16
+    Required:
+      Fn::Equals:
+        - NewVPC
+        - ${VpcOption}
+    AssociationProperty: ALIYUN::VPC::VPC::CidrBlock
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+  VSwitchCidrBlock:
+    Type: String
+    Label:
+      en: VSwitch CIDR Block
+      zh-cn: 交换机子网网段
+    Description:
+      zh-cn: 必须属于VPC的子网段。
+      en: Must belong to the subnet segment of VPC.
+    Default: 192.168.1.0/24
+    Required:
+      Fn::Equals:
+        - NewVPC
+        - ${VpcOption}
+    AssociationProperty: ALIYUN::VPC::VSwitch::CidrBlock
+    AssociationPropertyMetadata:
+      VpcCidrBlock: VpcCidrBlock
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+  PayType:
+    Type: String
+    Label:
+      en: ECS Instance Charge Type
+      zh-cn: 付费类型
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+  PayPeriodUnit:
+    Type: String
+    Label:
+      en: Pay Period Unit
+      zh-cn: 购买资源时长周期
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  PayPeriod:
+    Type: Number
+    Label:
+      en: Period
+      zh-cn: 购买资源时长
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  ModelType:
+    Type: String
+    Label:
+      en: Model Type
+      zh-cn: 模型系列
+    Default: "Qwen3"
+    AllowedValues:
+      - Qwen3
+      - Qwen2.5
+      - Qwen-VL
+      - QwQ
+      - Deepseek
+      - Cosmos
+  ModelName:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: "Qwen/Qwen3-8B"
+    AllowedValues:
+      - Qwen/Qwen3-8B
+      - Qwen/Qwen3-14B
+      - Qwen/Qwen3-30B-A3B
+      - Qwen/Qwen3-32B
+      - Qwen/Qwen3-235B-A22B
+      - Qwen/Qwen3-30B-A3B-FP8
+      - Qwen/Qwen3-32B-FP8
+      - Qwen/Qwen3-235B-A22B-FP8
+      - Qwen/QwQ-32B
+      - Qwen/Qwen2.5-7B-Instruct
+      - Qwen/Qwen2.5-32B-Instruct
+      - Qwen/Qwen2.5-72B-Instruct
+      - Qwen/Qwen2.5-VL-7B-Instruct
+      - Qwen/Qwen2.5-VL-32B-Instruct
+      - Qwen/Qwen2.5-VL-72B-Instruct
+      - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+      - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      - nv-community/Cosmos-Reason1-7B
+    AssociationPropertyMetadata:
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Qwen3'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen3-8B
+            - Qwen/Qwen3-14B
+            - Qwen/Qwen3-30B-A3B
+            - Qwen/Qwen3-32B
+            - Qwen/Qwen3-235B-A22B
+            - Qwen/Qwen3-30B-A3B-FP8
+            - Qwen/Qwen3-32B-FP8
+            - Qwen/Qwen3-235B-A22B-FP8
+        - Condition:
+            Fn::Equals:
+              - 'Qwen2.5'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen2.5-7B-Instruct
+            - Qwen/Qwen2.5-32B-Instruct
+            - Qwen/Qwen2.5-72B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'Qwen-VL'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen2.5-VL-7B-Instruct
+            - Qwen/Qwen2.5-VL-32B-Instruct
+            - Qwen/Qwen2.5-VL-72B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'QwQ'
+              - ${ModelType}
+          Value:
+            - Qwen/QwQ-32B
+        - Condition:
+            Fn::Equals:
+              - 'Deepseek'
+              - ${ModelType}
+          Value:
+            - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+            - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+        - Condition:
+            Fn::Equals:
+              - 'Cosmos'
+              - ${ModelType}
+          Value:
+            - nv-community/Cosmos-Reason1-7B
+      ValueLabelMapping:
+        "Qwen/Qwen3-8B": Qwen3-8B
+        "Qwen/Qwen3-14B": Qwen3-14B
+        "Qwen/Qwen3-30B-A3B": Qwen3-30B-A3B
+        "Qwen/Qwen3-32B": Qwen3-32B
+        "Qwen/Qwen3-235B-A22B": Qwen3-235B-A22B
+        "Qwen/QwQ-32B": QwQ-32B
+        "Qwen/Qwen2.5-7B-Instruct": Qwen2.5-7B-Instruct
+        "Qwen/Qwen2.5-32B-Instruct": Qwen2.5-32B-Instruct
+        "Qwen/Qwen2.5-72B-Instruct": Qwen2.5-72B-Instruct
+        "Qwen/Qwen3-30B-A3B-FP8": Qwen3-30B-A3B-FP8
+        "Qwen/Qwen3-32B-FP8": Qwen3-32B-FP8
+        "Qwen/Qwen3-235B-A22B-FP8": Qwen3-235B-A22B-FP8
+        "Qwen/Qwen2.5-VL-7B-Instruct": Qwen2.5-VL-7B-Instruct
+        "Qwen/Qwen2.5-VL-32B-Instruct": Qwen2.5-VL-32B-Instruct
+        "Qwen/Qwen2.5-VL-72B-Instruct": Qwen2.5-VL-72B-Instruct
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": DeepSeek-R1-0528-Qwen3-8B
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": DeepSeek-R1-Distill-Qwen-7B
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": DeepSeek-R1-Distill-Qwen-32B
+        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": DeepSeek-R1-Distill-Llama-70B
+        "nv-community/Cosmos-Reason1-7B": Cosmos-Reason1-7B
+    Description:
+      zh-cn: 部分模型需要的实例规格较大，如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+      en: Some models require instances with larger specifications, such as insufficient or unavailable specifications in the current region. Please switch to larger regions such as Japan and the United States to view.
+  EcsInstanceType:
+    Type: String
+    Label:
+      en: Instance Type
+      zh-cn: 实例类型
+    Description:
+      zh-cn: 如当前地域的实例规格不足或无可购买规格，请切换到北京、上海等大地域查看。
+      en: If the instance specifications in the current region are insufficient or no specifications are available for purchase, please switch to larger regions such as Japan and the United States to view.
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      InstanceChargeType: ${PayType}
+      ZoneId: ${ZoneId}
+      AllowedValues:
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'nv-community/Cosmos-Reason1-7B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-8B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-7B-Instruct'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-7B-Instruct'
+                  - ${ModelName}
+          Value:
+            - ecs.gn7i-c8g1.2xlarge
+            - ecs.gn7i-c16g1.4xlarge
+            - ecs.gn7i-c32g1.8xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-c56g1.14xlarge
+            - ecs.gn7i-c48g1.12xlarge
+            - ecs.gn7i-c48e.12xlarge
+            - ecs.gn8is.2xlarge
+            - ecs.gn8is.4xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.4xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7s-c8g1.2xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.8xlarge
+            - ecs.gn7s-c32g1.32xlarge
+            - ecs.gn7s-c48g1.12xlarge
+            - ecs.gn7s-c16g1.4xlarge
+            - ecs.gn7s-c56g1.14xlarge
+            - ecs.ebmgn9t.48xlarge
+        - Condition:
+            Fn::Equals:
+              - 'Qwen/Qwen3-14B'
+              - ${ModelName}
+          Value:
+            - ecs.gn7i-c32g1.16xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-2x.8xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+            - ecs.gn7s-c32g1.16xlarge
+            - ecs.gn7s-c32g1.32xlarge
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/QwQ-32B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-32B-Instruct'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-32B-Instruct'
+                  - ${ModelName}
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-c32g1.32xlarge
+            - ecs.gn7i-4x.8xlarge
+            - ecs.gn7i-4x.16xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-30B-A3B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-32B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-72B-Instruct'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen2.5-VL-72B-Instruct'
+                  - ${ModelName}
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn7i-8x.16xlarge
+            - ecs.gn7i-8x.32xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn7e-c16g1.8xlarge
+            - ecs.gn7e-c16g1.16xlarge
+            - ecs.gn7e-c16g1.32xlarge
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-30B-A3B-FP8'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-32B-FP8'
+                  - ${ModelName}
+          Value:
+            - ecs.ebmgn8v.48xlarge
+            - ecs.gn8is-2x.8xlarge
+            - ecs.gn8is-4x.16xlarge
+            - ecs.gn8is-8x.32xlarge
+            - ecs.gn8v-4x.8xlarge
+            - ecs.gn8v-4x.24xlarge
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
+        - Condition:
+            Fn::Equals:
+              - 'Qwen/Qwen3-235B-A22B-FP8'
+              - ${ModelName}
+          Value:
+            - ecs.gn8v-4x.8xlarge
+            - ecs.gn8v-4x.24xlarge
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - 'Qwen/Qwen3-235B-A22B'
+              - ${ModelName}
+          Value:
+            - ecs.gn8v-8x.16xlarge
+            - ecs.gn8v-8x.48xlarge
+            - ecs.ebmgn8v.48xlarge
+  WhitelistConfirmation:
+    Type: String
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    Default: true
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          此模型需要L20或GU8TF卡才可部署。使用此模型前，请确保已申请L20或GU8TF实例规格。如未申请，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          This model requires an L20 or GU8TF card to deploy. Before using this model, please make sure you have applied for an L20 or GU8TF instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+                - 'Qwen/Qwen3-30B-A3B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-32B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-235B-A22B-FP8'
+                - ${ModelName}
+            - Fn::Equals:
+                - 'Qwen/Qwen3-235B-A22B'
+                - ${ModelName}
+  ZoneId:
+    Type: String
+    Label:
+      en: Zone ID
+      zh-cn: 可用区ID
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+  VpcId:
+    Type: String
+    Label:
+      en: VPC ID
+      zh-cn: 专有网络VPC实例ID
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    Default: ''
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+  VSwitchId:
+    Type: String
+    Label:
+      en: VSwitch ID
+      zh-cn: 交换机实例ID
+    Default: ''
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      VpcId: ${VpcId}
+      ZoneId: ${ZoneId}
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+Resources:
+  # 新建vpc
+  EcsVpc:
+    Type: ALIYUN::ECS::VPC
+    Condition: CreateVpcConditions
+    Properties:
+      VpcName:
+        Ref: ALIYUN::StackName
+      CidrBlock:
+        Ref: VpcCidrBlock
+  # 新建vswitch
+  EcsVSwitch:
+    Condition: CreateVpcConditions
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VSwitchName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Ref: EcsVpc
+      ZoneId:
+        Ref: ZoneId
+      CidrBlock:
+        Ref: VSwitchCidrBlock
+  RandomApiKey:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 29
+      character_classes:
+        - class: lowercase
+          min: 1
+        - class: digits
+          min: 1
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
+  SecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      SecurityGroupName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      SecurityGroupIngress:
+        - PortRange: 8000/8000
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          NicType: internet
+  InstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - 'master'
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      VSwitchId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVSwitch
+          - Ref: VSwitchId
+      ZoneId:
+        Ref: ZoneId
+      SecurityGroupId:
+        Ref: SecurityGroup
+      ImageId:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - ECSImage
+      Password:
+        Fn::GetAtt:
+          - RandomPassword
+          - value
+      InstanceType:
+        Ref: EcsInstanceType
+      NetworkType: vpc
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SystemDiskSize
+      InternetMaxBandwidthOut:
+        Fn::If:
+          - PublicAccessConditions
+          - 5
+          - 0
+      IoOptimized: optimized
+      MaxAmount: 1
+  RunInstallCommand:
+    DependsOn:
+      - InstanceGroup
+      - RandomApiKey
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      InstanceIds:
+        Fn::GetAtt:
+          - InstanceGroup
+          - InstanceIds
+      Type: RunShellScript
+      Sync: true
+      Timeout: 3600
+      CommandContent:
+        Fn::Sub:
+          - |
+            docker run -d -t --net=host --gpus all \
+            --entrypoint /bin/bash \
+            --privileged \
+            --ipc=host \
+            --name vllm \
+            -v /root:/root \
+            ${DockerImage} \
+            -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 &&
+            vllm serve /root/llm-model/${ModelName} \
+            --served-model-name ${ModelName} \
+            --gpu-memory-utilization ${GpuMemory} \
+            --max-model-len ${MaxModelLen} \
+            --enable-chunked-prefill \
+            --host=0.0.0.0 \
+            --port 8000 \
+            --trust-remote-code \
+            --api-key "${VLLM_API_KEY}" \
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Qwen3Parameters}${Quantization}${VLParameters}"
+
+            MAX_TIMEOUT=3000
+            INTERVAL=10
+            MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
+
+            for ((i=1; i<=MAX_ATTEMPTS; i++))
+            do
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 20)
+                if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                then
+                    exit 0
+                else
+                    sleep $INTERVAL
+                fi
+            done
+          - ModelName:
+              Ref: ModelName
+            VLLM_API_KEY:
+              Fn::Join:
+                - '-'
+                - - 'sk'
+                  - Fn::GetAtt:
+                      - RandomApiKey
+                      - value
+            MaxModelLen:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - MaxModelLen
+            InstallVllm:
+              Fn::If:
+                - VllmVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade vllm==${VllmVersion} && '
+                    - VllmVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - VllmVersion
+            GpuMemory:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - GpuMemory
+            Qwen3Parameters:
+              Fn::If:
+                - IsQwen3
+                - ' --enable-reasoning --reasoning-parser deepseek_r1'
+                - ''
+            Quantization:
+              Fn::If:
+                - IsFP8Model
+                - ' --quantization fp8'
+                - ''
+            DockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - DockerImage
+            InstallVLPackage:
+              Fn::If:
+                - IsVLModel
+                - 'pip install transformers==4.51.3 && pip install accelerate && pip install qwen-vl-utils && '
+                - ''
+            VLParameters:
+              Fn::If:
+                - IsVLModel
+                - ' --dtype bfloat16 --limit-mm-per-prompt image=5,video=5'
+                - ''
+Outputs:
+  模型名称:
+    Label:
+      zh-ch: 模型名称
+      en: Model Name
+    Value:
+      Ref: ModelName
+  ApiKey:
+    NoEcho: true
+    Label: API Key
+    Value:
+      Fn::Join:
+        - '-'
+        - - 'sk'
+          - Fn::GetAtt:
+              - RandomApiKey
+              - value
+  在线访问:
+    Label:
+      zh-ch: 在线访问
+      en: Online Visit
+    Value: '<a href="https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}"> 访问链接 </a>'
+  内网地址:
+    Label:
+      zh-ch: 内网地址
+      en: Internal Address
+    Value:
+      Fn::Sub:
+        - 'http://${Endpoint}:8000/v1'
+        - Endpoint:
+            Fn::Select:
+              - '0'
+              - Fn::GetAtt:
+                  - InstanceGroup
+                  - PrivateIps
+  公网地址:
+    Label:
+      zh-ch: 公网地址
+      en: Public address
+    Value:
+      Fn::If:
+        - PublicAccessConditions
+        - Fn::Sub:
+            - 'http://${Endpoint}:8000/v1'
+            - Endpoint:
+                Fn::Select:
+                  - '0'
+                  - Fn::GetAtt:
+                      - InstanceGroup
+                      - PublicIps
+        - Fn::Select:
+            - '0'
+            - Fn::GetAtt:
+                - InstanceGroup
+                - PublicIps
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
+  Api调用示例:
+    Label:
+      zh-ch: Api调用示例
+      en: Api call example
+    Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
+    Value:
+      Fn::If:
+        - IsVLModel
+        - Fn::Sub:
+            - 'curl -X POST "${ApiServiceIp}/chat/completions" 
+                      -H "Content-Type: application/json" 
+                      -H "Authorization: Bearer ${API_KEY}"
+                      --data ''{ 
+                        "stream": true,
+                        "model": "${ModelName}",
+                           "messages": [
+                             { "role": "system", "content": "You are a helpful assistant." },
+                             { "role": "user", "content": [
+                               { "type": "image_url", "image_url": { "url": "https://modelscope.oss-cn-beijing.aliyuncs.com/resource/qwen.png" } },
+                               { "type": "text", "text": "What is the text in the illustrate?" }
+                             ] }
+                           ]
+                      }'''
+            - ModelName:
+                Ref: ModelName
+              API_KEY:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+              ApiServiceIp:
+                Fn::If:
+                  - PublicAccessConditions
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PublicIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PrivateIps
+        - Fn::Sub:
+            - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
+            - ModelName:
+                Ref: ModelName
+              API_KEY:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+              ApiServiceIp:
+                Fn::If:
+                  - PublicAccessConditions
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PublicIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - InstanceGroup
+                                - PrivateIps
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - WhitelistConfirmation
+        Label:
+          zh-cn: 白名单配置
+          en: Whitelist Configuration
+      - Parameters:
+          - ModelType
+          - ModelName
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+          - EcsInstanceType
+        Label:
+          zh-cn: 资源配置
+          en: Resource Configuration
+      - Parameters:
+          - ZoneId
+          - VpcOption
+          - VpcId
+          - VSwitchId
+          - VpcCidrBlock
+          - VSwitchCidrBlock
+          - PublicAccessOption
+        Label:
+          zh-cn: 网络配置
+          en: Network Configuration
