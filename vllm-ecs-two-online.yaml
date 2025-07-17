@@ -7,15 +7,59 @@ Mappings:
     deepseek-ai/DeepSeek-R1:
       SystemDiskSize: 1500
       MaxModelLen: 32768
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
       ECSImage: deepseek_r1_671b
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 32768
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      TP: 16
+      PP: 1
+      WaitTime: 3600
     deepseek-ai/DeepSeek-V3:
       SystemDiskSize: 1500
       MaxModelLen: 12784
       ECSImage: deepseek_v3
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 12784
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      TP: 16
+      PP: 1
+      WaitTime: 3600
     deepseek-ai/DeepSeek-R1-0528:
       SystemDiskSize: 1000
-      MaxModelLen: 12784
+      MaxModelLen: 32768
       ECSImage: deepseek_r1_0528
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 32768
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      TP: 16
+      PP: 1
+      WaitTime: 3600
+    moonshotai/Kimi-K2-Instruct:
+      SystemDiskSize: 1500
+      MaxModelLen: 32768
+      ECSImage: kimi_k2_instruct
+      VllmVersion: 0.9.2
+      GpuMemory: 0.95
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 32768
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      TP: 16
+      PP: 1
+      WaitTime: 7200
 Conditions:
   PublicAccessConditions:
     Fn::Equals:
@@ -25,27 +69,30 @@ Conditions:
     Fn::Equals:
       - NewVPC
       - Ref: VpcOption
-  IsDeepSeekR1671B:
+  VllmVersionConditions:
     Fn::Equals:
-      - 'deepseek-ai/DeepSeek-R1'
-      - Ref: ModelName
-  IsDeepSeekV3:
+      - 0.8.5
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - VllmVersion
+  PPConditions:
     Fn::Equals:
-      - 'deepseek-ai/DeepSeek-V3'
-      - Ref: ModelName
+      - 1
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - PP
+  IsKimi:
+    Fn::Equals:
+      - "Kimi"
+      - Ref: ModelType
 Parameters:
   PublicAccessOption:
     Type: Boolean
     Label:
       zh-cn: 支持公网访问
       en: Support Public Access
-    AssociationPropertyMetadata:
-      Visible:
-        Condition:
-          Fn::Not:
-            Fn::Equals:
-              - "Qwen-VL"
-              - ${ModelType}
     Required: true
   VpcOption:
     Type: String
@@ -159,6 +206,15 @@ Parameters:
             Fn::Equals:
               - ${PayType}
               - PostPaid
+  ModelType:
+    Type: String
+    Label:
+      en: Model Type
+      zh-cn: 模型系列
+    Default: "Deepseek"
+    AllowedValues:
+      - Deepseek
+      - Kimi
   ModelName:
     Type: String
     Label:
@@ -169,11 +225,23 @@ Parameters:
       - deepseek-ai/DeepSeek-R1-0528
       - deepseek-ai/DeepSeek-R1
       - deepseek-ai/DeepSeek-V3
+      - moonshotai/Kimi-K2-Instruct
     AssociationPropertyMetadata:
-      ValueLabelMapping:
-        "deepseek-ai/DeepSeek-R1-0528": DeepSeek-R1-0528
-        "deepseek-ai/DeepSeek-R1": DeepSeek-R1
-        "deepseek-ai/DeepSeek-V3": DeepSeek-V3
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Deepseek'
+              - ${ModelType}
+          Value:
+            - deepseek-ai/DeepSeek-R1-0528
+            - deepseek-ai/DeepSeek-R1
+            - deepseek-ai/DeepSeek-V3
+        - Condition:
+            Fn::Equals:
+              - 'Kimi'
+              - ${ModelType}
+          Value:
+            - moonshotai/Kimi-K2-Instruct
   WhitelistConfirmation:
     Type: String
     Label:
@@ -203,29 +271,12 @@ Parameters:
     Label:
       en: Instance Type
       zh-cn: 实例类型
+    AllowedValues:
+      - ecs.ebmgn8v.48xlarge
     AssociationProperty: ALIYUN::ECS::Instance::InstanceType
     AssociationPropertyMetadata:
       InstanceChargeType: ${PayType}
       ZoneId: ${ZoneId}
-      AllowedValues:
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1-0528
-          Value:
-            - ecs.ebmgn8v.48xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - deepseek-ai/DeepSeek-R1
-          Value:
-            - ecs.ebmgn8v.48xlarge
-        - Condition:
-            Fn::Equals:
-              - '${ModelName}'
-              - deepseek-ai/DeepSeek-V3
-          Value:
-            - ecs.ebmgn8v.48xlarge
   ZoneId:
     Type: String
     Label:
@@ -463,7 +514,7 @@ Resources:
           - InstanceIds
       Type: RunShellScript
       Sync: true
-      Timeout: 3600
+      Timeout: 7200
       CommandContent:
         Fn::Sub:
           - |
@@ -478,9 +529,8 @@ Resources:
             --ulimit memlock=-1 \
             --ulimit stack=67108864 \
             -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
-            -c "pip install --upgrade vllm==0.8.5 &&
-            export NCCL_IB_DISABLE=0 &&
+            ${DockerImage} \
+            -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
             export NCCL_DEBUG=INFO &&
             export NCCL_NET_GDR_LEVEL=5 &&
             export NCCL_P2P_LEVEL=5 &&
@@ -495,6 +545,27 @@ Resources:
                 - Fn::GetAtt:
                     - MasterInstanceGroup
                     - PrivateIps
+            InstallVllm:
+              Fn::If:
+                - VllmVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade vllm==${VllmVersion} && '
+                    - VllmVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - VllmVersion
+            DockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - DockerImage
+            InstallBlobfile:
+              Fn::If:
+                - IsKimi
+                - 'pip install blobfile && '
+                - ''
   WorkerRunInstallCommand:
     DependsOn:
       - WorkerInstanceGroup
@@ -507,7 +578,7 @@ Resources:
           - InstanceIds
       Type: RunShellScript
       Sync: true
-      Timeout: 3600
+      Timeout: 7200
       CommandContent:
         Fn::Sub:
           - |
@@ -522,9 +593,8 @@ Resources:
             --ulimit memlock=-1 \
             --ulimit stack=67108864 \
             -v /root:/root \
-            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
-            -c "pip install --upgrade vllm==0.8.5 && 
-            export NCCL_IB_DISABLE=0 &&
+            ${DockerImage} \
+            -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
             export NCCL_DEBUG=INFO &&
             export NCCL_NET_GDR_LEVEL=5 &&
             export NCCL_P2P_LEVEL=5 &&
@@ -534,23 +604,22 @@ Resources:
             ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
             vllm serve /root/llm-model/${ModelName} \
             --served-model-name ${ModelName} \
-            --gpu-memory-utilization 0.95 \
+            --gpu-memory-utilization ${GpuMemory} \
             --max-model-len ${MaxModelLen} \
             --enable-chunked-prefill \
             --host=0.0.0.0 \
             --port 8000 \
             --trust-remote-code \
-            --api-key "${VLLM_API_KEY}" \
-            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
-            --pipeline-parallel-size 2"
+            --api-key "${API_KEY}" \
+            --tensor-parallel-size ${TP}${PP}"
             
-            MAX_TIMEOUT=3000
-            INTERVAL=10
+            MAX_TIMEOUT=${WaitTime}
+            INTERVAL=30
             MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
 
             for ((i=1; i<=MAX_ATTEMPTS; i++))
             do
-                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 20)
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 200)
                 if echo "$LATEST_LOG" | grep -q "Application startup complete."
                 then
                     exit 0
@@ -558,9 +627,11 @@ Resources:
                     sleep $INTERVAL
                 fi
             done
+            echo "Failed to start the application after $MAX_TIMEOUT seconds."
+            exit 1
           - ModelName:
               Ref: ModelName
-            VLLM_API_KEY:
+            API_KEY:
               Fn::Join:
                 - '-'
                 - - 'sk'
@@ -578,6 +649,53 @@ Resources:
                 - Fn::GetAtt:
                     - MasterInstanceGroup
                     - PrivateIps
+            InstallVllm:
+              Fn::If:
+                - VllmVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade vllm==${VllmVersion} && '
+                    - VllmVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - VllmVersion
+            GpuMemory:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - GpuMemory
+            DockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - DockerImage
+            WaitTime:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - WaitTime
+            TP:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - TP
+            PP:
+              Fn::If:
+                - PPConditions
+                - ''
+                - Fn::Sub:
+                    - ' --pipeline-parallel-size ${PPValue}'
+                    - PPValue:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - PP
+            InstallBlobfile:
+              Fn::If:
+                - IsKimi
+                - 'pip install blobfile && '
+                - ''
 Outputs:
   模型名称:
     Label:
@@ -690,6 +808,7 @@ Metadata:
           zh-cn: 白名单配置
           en: Whitelist Configuration
       - Parameters:
+          - ModelType
           - ModelName
           - PayType
           - PayPeriodUnit
