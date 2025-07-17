@@ -1,5 +1,711 @@
-ROSTemplateFormatVersion: "2015-09-01"
-Parameters:
+ROSTemplateFormatVersion: '2015-09-01'
 Description:
+  en: Use vllm deploy llm on two ecs.
+  zh-cn: 用vllm双机部署大模型
+Mappings:
+  ModelMap:
+    deepseek-ai/DeepSeek-R1:
+      SystemDiskSize: 1500
+      MaxModelLen: 32768
+      ECSImage: deepseek_r1_671b
+    deepseek-ai/DeepSeek-V3:
+      SystemDiskSize: 1500
+      MaxModelLen: 12784
+      ECSImage: deepseek_v3
+    deepseek-ai/DeepSeek-R1-0528:
+      SystemDiskSize: 1000
+      MaxModelLen: 12784
+      ECSImage: deepseek_r1_0528
+Conditions:
+  PublicAccessConditions:
+    Fn::Equals:
+      - true
+      - Ref: PublicAccessOption
+  CreateVpcConditions:
+    Fn::Equals:
+      - NewVPC
+      - Ref: VpcOption
+  IsDeepSeekR1671B:
+    Fn::Equals:
+      - 'deepseek-ai/DeepSeek-R1'
+      - Ref: ModelName
+  IsDeepSeekV3:
+    Fn::Equals:
+      - 'deepseek-ai/DeepSeek-V3'
+      - Ref: ModelName
+Parameters:
+  PublicAccessOption:
+    Type: Boolean
+    Label:
+      zh-cn: 支持公网访问
+      en: Support Public Access
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - "Qwen-VL"
+              - ${ModelType}
+    Required: true
+  VpcOption:
+    Type: String
+    AllowedValues:
+      - NewVPC
+      - ExistingVPC
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        NewVPC:
+          zh-cn: 新建专有网络
+          en: New VPC
+        ExistingVPC:
+          zh-cn: 已有专有网络
+          en: Existing VPC
+    Label:
+      en: Select Existing or New VPC
+      zh-cn: 选择已有/新建的专有网络
+    Required: true
+    Default: NewVPC
+  VpcCidrBlock:
+    Type: String
+    Label:
+      en: VPC CIDR IPv4 Block
+      zh-cn: 专有网络IPv4网段
+    Description:
+      zh-cn: VPC的ip地址段范围，<br>您可以使用以下的ip地址段或其子网:<br><font color='green'>[10.0.0.0/8]</font><br><font color='green'>[172.16.0.0/12]</font><br><font color='green'>[192.168.0.0/16]</font>
+      en: 'The ip address range of the VPC in the CidrBlock form; <br>You can use the following ip address ranges and their subnets: <br><font color=''green''>[10.0.0.0/8]</font><br><font color=''green''>[172.16.0.0/12]</font><br><font color=''green''>[192.168.0.0/16]</font>'
+    Default: 192.168.0.0/16
+    Required:
+      Fn::Equals:
+        - NewVPC
+        - ${VpcOption}
+    AssociationProperty: ALIYUN::VPC::VPC::CidrBlock
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+  VSwitchCidrBlock:
+    Type: String
+    Label:
+      en: VSwitch CIDR Block
+      zh-cn: 交换机子网网段
+    Description:
+      zh-cn: 必须属于VPC的子网段。
+      en: Must belong to the subnet segment of VPC.
+    Default: 192.168.1.0/24
+    Required:
+      Fn::Equals:
+        - NewVPC
+        - ${VpcOption}
+    AssociationProperty: ALIYUN::VPC::VSwitch::CidrBlock
+    AssociationPropertyMetadata:
+      VpcCidrBlock: VpcCidrBlock
+      Visible:
+        Condition:
+          Fn::Equals:
+            - NewVPC
+            - ${VpcOption}
+  PayType:
+    Type: String
+    Label:
+      en: ECS Instance Charge Type
+      zh-cn: 付费类型
+    Default: PostPaid
+    AllowedValues:
+      - PostPaid
+      - PrePaid
+    AssociationProperty: ChargeType
+    AssociationPropertyMetadata:
+      LocaleKey: InstanceChargeType
+  PayPeriodUnit:
+    Type: String
+    Label:
+      en: Pay Period Unit
+      zh-cn: 购买资源时长周期
+    Default: Month
+    AllowedValues:
+      - Month
+      - Year
+    AssociationProperty: PayPeriodUnit
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  PayPeriod:
+    Type: Number
+    Label:
+      en: Period
+      zh-cn: 购买资源时长
+    Default: 1
+    AllowedValues:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+    AssociationProperty: PayPeriod
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${PayType}
+              - PostPaid
+  ModelName:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: "deepseek-ai/DeepSeek-R1-0528"
+    AllowedValues:
+      - deepseek-ai/DeepSeek-R1-0528
+      - deepseek-ai/DeepSeek-R1
+      - deepseek-ai/DeepSeek-V3
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        "deepseek-ai/DeepSeek-R1-0528": DeepSeek-R1-0528
+        "deepseek-ai/DeepSeek-R1": DeepSeek-R1
+        "deepseek-ai/DeepSeek-V3": DeepSeek-V3
+  WhitelistConfirmation:
+    Type: String
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    Default: true
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          此模型需要GU8TF卡才可部署。使用此模型前，请确保已申请GU8TF实例规格。如未申请，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          This model requires an GU8TF card to deploy. Before using this model, please make sure you have applied for an GU8TF instance specification. If you have not applied, please contact customer service, sales, or submit a work order to add it.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
+  EcsInstanceType:
+    Type: String
+    Label:
+      en: Instance Type
+      zh-cn: 实例类型
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      InstanceChargeType: ${PayType}
+      ZoneId: ${ZoneId}
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1-0528
+          Value:
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-R1
+          Value:
+            - ecs.ebmgn8v.48xlarge
+        - Condition:
+            Fn::Equals:
+              - '${ModelName}'
+              - deepseek-ai/DeepSeek-V3
+          Value:
+            - ecs.ebmgn8v.48xlarge
+  ZoneId:
+    Type: String
+    Label:
+      en: Zone ID
+      zh-cn: 可用区ID
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+  VpcId:
+    Type: String
+    Label:
+      en: VPC ID
+      zh-cn: 专有网络VPC实例ID
+    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    Default: ''
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
+  VSwitchId:
+    Type: String
+    Label:
+      en: VSwitch ID
+      zh-cn: 交换机实例ID
+    Default: ''
+    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
+    Required:
+      Fn::Equals:
+        - ExistingVPC
+        - ${VpcOption}
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      VpcId: ${VpcId}
+      ZoneId: ${ZoneId}
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ExistingVPC
+            - ${VpcOption}
 Resources:
+  # 新建vpc
+  EcsVpc:
+    Type: ALIYUN::ECS::VPC
+    Condition: CreateVpcConditions
+    Properties:
+      VpcName:
+        Ref: ALIYUN::StackName
+      CidrBlock:
+        Ref: VpcCidrBlock
+  # 新建vswitch
+  EcsVSwitch:
+    Condition: CreateVpcConditions
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VSwitchName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Ref: EcsVpc
+      ZoneId:
+        Ref: ZoneId
+      CidrBlock:
+        Ref: VSwitchCidrBlock
+  RandomApiKey:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 29
+      character_classes:
+        - class: lowercase
+          min: 1
+        - class: digits
+          min: 1
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
+  SecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      SecurityGroupName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      SecurityGroupIngress:
+        - PortRange: 8000/8000
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          NicType: internet
+  MasterInstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - 'master'
+      InstanceChargeType:
+        Ref: PayType
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      ZoneId:
+        Ref: ZoneId
+      ImageId:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - ECSImage
+      Password:
+        Fn::GetAtt:
+          - RandomPassword
+          - value
+      InstanceType:
+        Ref: EcsInstanceType
+      NetworkType: vpc
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SystemDiskSize
+      InternetMaxBandwidthOut:
+        Fn::If:
+          - PublicAccessConditions
+          - 5
+          - 0
+      IoOptimized: optimized
+      MaxAmount: 1
+      EniMappings:
+        - InstanceType: Primary
+          NetworkInterfaceTrafficMode: HighPerformance
+          SecurityGroupId:
+            Ref: SecurityGroup
+          VSwitchId:
+            Fn::If:
+              - CreateVpcConditions
+              - Ref: EcsVSwitch
+              - Ref: VSwitchId
+          QueueNumber: 2
+        - InstanceType: Secondary
+          NetworkInterfaceTrafficMode: HighPerformance
+          DeleteOnRelease: true
+  WorkerInstanceGroup:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - 'worker'
+      InstanceChargeType:
+        Ref: PayType
+      NetworkType: vpc
+      PeriodUnit:
+        Ref: PayPeriodUnit
+      Period:
+        Ref: PayPeriod
+      VpcId:
+        Fn::If:
+          - CreateVpcConditions
+          - Ref: EcsVpc
+          - Ref: VpcId
+      ZoneId:
+        Ref: ZoneId
+      ImageId:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - ECSImage
+      Password:
+        Fn::GetAtt:
+          - RandomPassword
+          - value
+      InstanceType:
+        Ref: EcsInstanceType
+      SystemDiskCategory: cloud_essd
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SystemDiskSize
+      InternetMaxBandwidthOut:
+        Fn::If:
+          - PublicAccessConditions
+          - 5
+          - 0
+      IoOptimized: optimized
+      MaxAmount: 1
+      EniMappings:
+        - InstanceType: Primary
+          NetworkInterfaceTrafficMode: HighPerformance
+          SecurityGroupId:
+            Ref: SecurityGroup
+          VSwitchId:
+            Fn::If:
+              - CreateVpcConditions
+              - Ref: EcsVSwitch
+              - Ref: VSwitchId
+          QueueNumber: 2
+        - InstanceType: Secondary
+          NetworkInterfaceTrafficMode: HighPerformance
+          DeleteOnRelease: true
+  MasterRunInstallCommand:
+    DependsOn:
+      - MasterInstanceGroup
+      - RandomApiKey
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      InstanceIds:
+        Fn::GetAtt:
+          - MasterInstanceGroup
+          - InstanceIds
+      Type: RunShellScript
+      Sync: true
+      Timeout: 3600
+      CommandContent:
+        Fn::Sub:
+          - |
+            docker run -t -d \
+            --entrypoint /bin/bash \
+            --name=vllm \
+            --ipc=host \
+            --cap-add=SYS_PTRACE \
+            --network=host \
+            --gpus all \
+            --privileged \
+            --ulimit memlock=-1 \
+            --ulimit stack=67108864 \
+            -v /root:/root \
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
+            -c "pip install --upgrade vllm==0.8.5 &&
+            export NCCL_IB_DISABLE=0 &&
+            export NCCL_DEBUG=INFO &&
+            export NCCL_NET_GDR_LEVEL=5 &&
+            export NCCL_P2P_LEVEL=5 &&
+            export NCCL_IB_GID_INDEX=1 &&
+            export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 && 
+            ray start --head --dashboard-host 0.0.0.0 --port=6379 && 
+            tail -f /dev/null"
+          - HEAD_NODE_ADDRESS:
+              Fn::Select:
+                - '0'
+                - Fn::GetAtt:
+                    - MasterInstanceGroup
+                    - PrivateIps
+  WorkerRunInstallCommand:
+    DependsOn:
+      - WorkerInstanceGroup
+      - MasterRunInstallCommand
+    Type: ALIYUN::ECS::RunCommand
+    Properties:
+      InstanceIds:
+        Fn::GetAtt:
+          - WorkerInstanceGroup
+          - InstanceIds
+      Type: RunShellScript
+      Sync: true
+      Timeout: 3600
+      CommandContent:
+        Fn::Sub:
+          - |
+            docker run -t -d \
+            --entrypoint /bin/bash \
+            --name=vllm \
+            --ipc=host \
+            --cap-add=SYS_PTRACE \
+            --network=host \
+            --gpus all \
+            --privileged \
+            --ulimit memlock=-1 \
+            --ulimit stack=67108864 \
+            -v /root:/root \
+            egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224 \
+            -c "pip install --upgrade vllm==0.8.5 && 
+            export NCCL_IB_DISABLE=0 &&
+            export NCCL_DEBUG=INFO &&
+            export NCCL_NET_GDR_LEVEL=5 &&
+            export NCCL_P2P_LEVEL=5 &&
+            export NCCL_IB_GID_INDEX=1 &&
+            export GLOO_SOCKET_IFNAME=eth0 && 
+            export NCCL_SOCKET_IFNAME=eth0 && 
+            ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
+            vllm serve /root/llm-model/${ModelName} \
+            --served-model-name ${ModelName} \
+            --gpu-memory-utilization 0.95 \
+            --max-model-len ${MaxModelLen} \
+            --enable-chunked-prefill \
+            --host=0.0.0.0 \
+            --port 8000 \
+            --trust-remote-code \
+            --api-key "${VLLM_API_KEY}" \
+            --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
+            --pipeline-parallel-size 2"
+            
+            MAX_TIMEOUT=3000
+            INTERVAL=10
+            MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
 
+            for ((i=1; i<=MAX_ATTEMPTS; i++))
+            do
+                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 20)
+                if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                then
+                    exit 0
+                else
+                    sleep $INTERVAL
+                fi
+            done
+          - ModelName:
+              Ref: ModelName
+            VLLM_API_KEY:
+              Fn::Join:
+                - '-'
+                - - 'sk'
+                  - Fn::GetAtt:
+                      - RandomApiKey
+                      - value
+            MaxModelLen:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - MaxModelLen
+            HEAD_NODE_ADDRESS:
+              Fn::Select:
+                - '0'
+                - Fn::GetAtt:
+                    - MasterInstanceGroup
+                    - PrivateIps
+Outputs:
+  模型名称:
+    Label:
+      zh-ch: 模型名称
+      en: Model Name
+    Value:
+      Ref: ModelName
+  ApiKey:
+    NoEcho: true
+    Label: API Key
+    Value:
+      Fn::Join:
+        - '-'
+        - - 'sk'
+          - Fn::GetAtt:
+              - RandomApiKey
+              - value
+  在线访问:
+    Label:
+      zh-ch: 在线访问
+      en: Online Visit
+    Value: '<a href="https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}"> 访问链接 </a>'
+  内网地址:
+    Label:
+      zh-ch: 内网地址
+      en: Internal Address
+    Value:
+      Fn::Sub:
+        - 'http://${Endpoint}:8000/v1'
+        - Endpoint:
+            Fn::Select:
+              - '0'
+              - Fn::GetAtt:
+                  - WorkerInstanceGroup
+                  - PrivateIps
+  公网地址:
+    Label:
+      zh-ch: 公网地址
+      en: Public Address
+    Value:
+      Fn::If:
+        - PublicAccessConditions
+        - Fn::Sub:
+            - 'http://${Endpoint}:8000/v1'
+            - Endpoint:
+                Fn::Select:
+                  - '0'
+                  - Fn::GetAtt:
+                      - WorkerInstanceGroup
+                      - PublicIps
+        - Fn::Select:
+            - '0'
+            - Fn::GetAtt:
+                - WorkerInstanceGroup
+                - PublicIps
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
+  Api调用示例:
+    Label:
+      zh-ch: Api调用示例
+      en: Api Call Example
+    Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
+    Value:
+      Fn::Sub:
+        - 'curl -X POST "${ApiServiceIp}/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${API_KEY}" --data ''{ "stream": true, "model": "${ModelName}",  "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
+        - ModelName:
+            Ref: ModelName
+          API_KEY:
+            Fn::Join:
+              - '-'
+              - - 'sk'
+                - Fn::GetAtt:
+                    - RandomApiKey
+                    - value
+          ApiServiceIp:
+            Fn::If:
+              - PublicAccessConditions
+              - Fn::Sub:
+                  - 'http://${Endpoint}:8000/v1'
+                  - Endpoint:
+                      Fn::Select:
+                        - '0'
+                        - Fn::GetAtt:
+                            - WorkerInstanceGroup
+                            - PublicIps
+              - Fn::Sub:
+                  - 'http://${Endpoint}:8000/v1'
+                  - Endpoint:
+                      Fn::Select:
+                        - '0'
+                        - Fn::GetAtt:
+                            - WorkerInstanceGroup
+                            - PrivateIps
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - WhitelistConfirmation
+        Label:
+          zh-cn: 白名单配置
+          en: Whitelist Configuration
+      - Parameters:
+          - ModelName
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+          - EcsInstanceType
+        Label:
+          zh-cn: 资源配置
+          en: Resource Configuration
+      - Parameters:
+          - ZoneId
+          - VpcOption
+          - VpcId
+          - VSwitchId
+          - VpcCidrBlock
+          - VSwitchCidrBlock
+          - PublicAccessOption
+        Label:
+          zh-cn: 网络配置
+          en: Network Configuration
