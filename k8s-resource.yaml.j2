@@ -118,11 +118,12 @@ containers:
   pip install blobfile
   {%- endif %}
 
+  {%- if is_vllm_engine %}
   {%- if is_deepseek_fp8_ppu_model %}
 # DeepSeek 模型特殊处理：下载并安装特定版本的 vllm
   wget -q https://aiacc-inference-public-v2.oss-cn-hangzhou.aliyuncs.com/llms_data/deepseek-quant/vllm-0.7.2%2Bcu126-cp310-cp310-linux_x86_64.whl > /var/log/app.log 2>&1 && \
   pip install vllm-0.7.2+cu126-cp310-cp310-linux_x86_64.whl --no-deps --force-reinstall -i https://mirrors.aliyun.com/pypi/simple/ >> /var/log/app.log 2>&1
-  
+
   # 启动 DeepSeek vllm 服务（后台运行）
   vllm serve /llm-model/${ModelName} \
   --port 8000 \
@@ -164,15 +165,48 @@ containers:
   --enforce-eager > /var/log/app.log 2>&1 & \
   {%- endif %}
   {%- endif %}
+  {%- endif %}
+
+  {%- if is_sglang_engine %}
+  python3 -m sglang.launch_server \
+  --model-path /llm-model/${ModelName} \
+  --host 0.0.0.0 \
+  --port 8000 \${Quantization}${SGVLParameters}
+  --trust-remote-code \
+  --served-model-name ${ModelName} \
+  --max-total-tokens 32768 \
+  --api-key ${VllmApiKey} \
+  {%- if is_kimi_k2_instruct_model %}
+  --mem-fraction-static 0.85 \
+  {%- else %}
+  --mem-fraction-static 0.95 \
+  {%- endif %}
+  --tp ${GPUAmount} \
+  {%- if is_vl_model %}
+  --chat-template qwen2-vl \
+  {%- endif %}
+  {%- if is_fp8_model %}
+  --quantization fp8 \
+  {%- endif %}
+  {%- endif %}
+  {%- endif %}
 
 # 尾随日志文件保持容器运行
   tail -f /var/log/app.log
-  {%- if gpu_type_is_ppu %}
+  {%- if gpu_type_is_ppu and is_vllm_engine %}
 image: acs-registry-vpc.${RegionId}.cr.aliyuncs.com/egslingjun/inference-xpu-pytorch:25.07-v1.5.3-vllm0.9.1-torch2.6-cu126-20250703
-  {%- else %}
+  {%- elif not gpu_type_is_ppu and is_vllm_engine %}
 image: acs-registry-vpc.${RegionId}.cr.aliyuncs.com/egslingjun/inference-nv-pytorch:25.04-vllm0.8.5-pytorch2.6-cu124-20250429-test-serverless
+  {%- elif gpu_type_is_ppu and is_sglang_engine %}
+image: acs-registry-vpc.${RegionId}.cr.aliyuncs.com/egslingjun/inference-xpu-pytorch:25.07-v1.5.3-sglang0.4.7-torch2.6-cu126-20250703
+  {%- elif not gpu_type_is_ppu and is_sglang_engine %}
+image: acs-registry-vpc.${RegionId}.cr.aliyuncs.com/egslingjun/inference-nv-pytorch:25.06-sglang0.4.7-pytorch2.7-cu128-20250611-serverless
   {%- endif %}
+  {%- if is_vllm_engine %}
 name: vllm
+  {%- elif is_sglang_engine %}
+name: sglang
+  {%- endif %}
 env:
   - name: VLLM_API_KEY
     value: ${VllmApiKey}
