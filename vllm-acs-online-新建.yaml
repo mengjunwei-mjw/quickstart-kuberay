@@ -134,7 +134,7 @@ Parameters:
       - Qwen-VL
       - QwQ
       - Deepseek
-      - Moonshot
+      - Kimi
   ModelName:
     Type: String
     Label:
@@ -245,7 +245,7 @@ Parameters:
             - deepseek-ai/DeepSeek-V3
         - Condition:
             Fn::Equals:
-              - 'Moonshot'
+              - 'Kimi'
               - ${ModelType}
           Value:
             - moonshotai/Kimi-K2-Instruct
