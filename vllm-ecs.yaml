@@ -6,20 +6,30 @@ Mappings:
   ModelMap:
     Qwen/QwQ-32B:
       SystemDiskSize: 200
-      MaxModelLen: 16384
-      VllmVersion: 0.7.2
-      GpuMemory: 0.98
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwq_32b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     Qwen/Qwen2.5-72B-Instruct:
-      SystemDiskSize: 300
+      SystemDiskSize: 350
       MaxModelLen: 8192
       VllmVersion: 0.8.5
       GpuMemory: 0.9
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen_2_5_72b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 2100
     Qwen/Qwen2.5-32B-Instruct:
       SystemDiskSize: 200
       MaxModelLen: 8192
@@ -28,62 +38,102 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen_2_5_32b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     Qwen/Qwen2.5-7B-Instruct:
       SystemDiskSize: 80
       MaxModelLen: 8192
-      VllmVersion: 0.7.2
+      VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen_2_5_7b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     Qwen/Qwen3-32B:
-      SystemDiskSize: 300
-      MaxModelLen: 16384
+      SystemDiskSize: 200
+      MaxModelLen: 8192
       VllmVersion: 0.8.5
-      GpuMemory: 0.85
+      GpuMemory: 0.9
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_32b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     Qwen/Qwen3-32B-FP8:
       SystemDiskSize: 150
       MaxModelLen: 16384
       VllmVersion: 0.8.5
-      GpuMemory: 0.85
+      GpuMemory: 0.95
       Quantization: 8
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_32b_fp8
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1200
     Qwen/Qwen3-30B-A3B:
       SystemDiskSize: 200
-      MaxModelLen: 16384
+      MaxModelLen: 8192
       VllmVersion: 0.8.5
-      GpuMemory: 0.85
+      GpuMemory: 0.9
       Quantization: 8
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_30b_a3b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     Qwen/Qwen3-30B-A3B-FP8:
       SystemDiskSize: 150
       MaxModelLen: 16384
       VllmVersion: 0.8.5
-      GpuMemory: 0.85
+      GpuMemory: 0.95
       Quantization: 8
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_30b_a3b_fp8
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1200
     Qwen/Qwen3-235B-A22B:
-      SystemDiskSize: 800
+      SystemDiskSize: 1000
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_235b_a22b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 3000
     Qwen/Qwen3-235B-A22B-FP8:
       SystemDiskSize: 550
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 8
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_235b_a22b_fp8
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 16384
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 2100
     Qwen/Qwen3-8B:
       SystemDiskSize: 80
       MaxModelLen: 8192
@@ -92,38 +142,63 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_8b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     deepseek-ai/DeepSeek-R1-Distill-Llama-70B:
-      SystemDiskSize: 300
-      MaxModelLen: 16384
-      VllmVersion: 0.7.2
-      GpuMemory: 0.98
+      SystemDiskSize: 350
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: deepseek_r1_70b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 2100
     deepseek-ai/DeepSeek-R1-Distill-Qwen-32B:
       SystemDiskSize: 200
-      MaxModelLen: 16384
-      VllmVersion: 0.7.2
-      GpuMemory: 0.98
+      MaxModelLen: 8192
+      VllmVersion: 0.8.5
+      GpuMemory: 0.9
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: deepseek_r1_32b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     deepseek-ai/DeepSeek-R1-Distill-Qwen-7B:
       SystemDiskSize: 80
       MaxModelLen: 8192
-      VllmVersion: 0.7.2
-      GpuMemory: 0.98
+      VllmVersion: 0.8.5
+      GpuMemory: 0.95
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: deepseek_r1_7b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     nv-community/Cosmos-Reason1-7B:
       SystemDiskSize: 80
       MaxModelLen: 8192
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 16
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-pytorch2.5.1-cuda12.4-ubuntu22.04
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: cosmos_r1_7b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     Qwen/Qwen3-14B:
       SystemDiskSize: 100
       MaxModelLen: 8192
@@ -132,6 +207,11 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen3_14b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1200
     deepseek-ai/DeepSeek-R1-0528-Qwen3-8B:
       SystemDiskSize: 80
       MaxModelLen: 8192
@@ -140,22 +220,37 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: deepseek_r1_0528_8b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     Qwen/Qwen2.5-VL-7B-Instruct:
-      SystemDiskSize: 60
+      SystemDiskSize: 80
       MaxModelLen: 8192
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen2_5_vl_7b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 900
     Qwen/Qwen2.5-VL-32B-Instruct:
-      SystemDiskSize: 160
+      SystemDiskSize: 200
       MaxModelLen: 16384
       VllmVersion: 0.8.5
       GpuMemory: 0.92
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen2_5_vl_32b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 1500
     Qwen/Qwen2.5-VL-72B-Instruct:
       SystemDiskSize: 350
       MaxModelLen: 4096
@@ -164,6 +259,11 @@ Mappings:
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       ECSImage: qwen2_5_vl_72b
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.9
+      SGMaxTotalTokens: 8192
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      WaitTime: 2100
 Conditions:
   PublicAccessConditions:
     Fn::Or:
@@ -179,11 +279,22 @@ Conditions:
       - Ref: VpcOption
   VllmVersionConditions:
     Fn::Equals:
-      - 0.7.2
+      - 0.8.5
       - Fn::FindInMap:
           - ModelMap
           - Ref: ModelName
           - VllmVersion
+  SGLangVersionConditions:
+    Fn::Equals:
+      - 0.4.6.post1
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SGVersion
+  IsVLLM:
+    Fn::Equals:
+      - 'vLLM'
+      - Ref: EngineType
   IsVLModel:
     Fn::Equals:
       - 'Qwen-VL'
@@ -199,20 +310,13 @@ Conditions:
           - ModelMap
           - Ref: ModelName
           - Quantization
-  IsDefaultDockerImage:
-    Fn::Equals:
-      - ''
-      - Ref: DockerImage
-  IsDefaultScript:
-    Fn::Equals:
-      - ''
-      - Ref: Script
 Parameters:
   PublicAccessOption:
     Type: Boolean
     Label:
       zh-cn: 支持公网访问
       en: Support Public Access
+    Default: false
     AssociationPropertyMetadata:
       Visible:
         Condition:
@@ -220,7 +324,6 @@ Parameters:
             Fn::Equals:
               - "Qwen-VL"
               - ${ModelType}
-    Required: true
   VpcOption:
     Type: String
     AllowedValues:
@@ -333,6 +436,15 @@ Parameters:
             Fn::Equals:
               - ${PayType}
               - PostPaid
+  EngineType:
+    Type: String
+    Label:
+      en: Engine Type
+      zh-cn: 部署方式
+    Default: "vLLM"
+    AllowedValues:
+      - vLLM
+      - SGLang
   ModelType:
     Type: String
     Label:
@@ -537,6 +649,12 @@ Parameters:
         - Condition:
             Fn::Or:
               - Fn::Equals:
+                  - 'Qwen/Qwen3-30B-A3B'
+                  - ${ModelName}
+              - Fn::Equals:
+                  - 'Qwen/Qwen3-32B'
+                  - ${ModelName}
+              - Fn::Equals:
                   - 'Qwen/QwQ-32B'
                   - ${ModelName}
               - Fn::Equals:
@@ -563,12 +681,6 @@ Parameters:
             - ecs.gn7e-c16g1.32xlarge
         - Condition:
             Fn::Or:
-              - Fn::Equals:
-                  - 'Qwen/Qwen3-30B-A3B'
-                  - ${ModelName}
-              - Fn::Equals:
-                  - 'Qwen/Qwen3-32B'
-                  - ${ModelName}
               - Fn::Equals:
                   - 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
                   - ${ModelName}
@@ -705,12 +817,6 @@ Parameters:
           Fn::Equals:
             - ExistingVPC
             - ${VpcOption}
-  DockerImage:
-    Type: String
-    Default: ''
-  Script:
-    Type: String
-    Default: ''
 Resources:
   # 新建vpc
   EcsVpc:
@@ -841,12 +947,12 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            if [ -z "${Script}" ]; then
+            if [ "${EngineType}" == "vLLM" ]; then
               docker run -d -t --net=host --gpus all \
               --entrypoint /bin/bash \
               --privileged \
               --ipc=host \
-              --name vllm \
+              --name=vllm \
               -v /root:/root \
               ${DockerImage} \
               -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
@@ -859,27 +965,36 @@ Resources:
               --host=0.0.0.0 \
               --port 8000 \
               --trust-remote-code \
-              --api-key "${VLLM_API_KEY}" \
+              --api-key "${API_KEY}" \
               --tensor-parallel-size $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}')${Qwen3Parameters}${Quantization}${VLParameters}"
-            else
+            elif [ "${EngineType}" == "SGLang" ]; then
               docker run -d -t --net=host --gpus all \
               --entrypoint /bin/bash \
               --privileged \
               --ipc=host \
-              --name vllm \
+              --name=sglang \
               -v /root:/root \
-              ${DockerImage} \
-              -c "${InstallVLPackage}${InstallVllm}export GLOO_SOCKET_IFNAME=eth0 && 
-              export NCCL_SOCKET_IFNAME=eth0 && ${Script}"
+              ${SGDockerImage} \
+              -c "${InstallSGLang}export GLOO_SOCKET_IFNAME=eth0 &&
+              export NCCL_SOCKET_IFNAME=eth0 &&
+              python3 -m sglang.launch_server \
+              --model-path /root/llm-model/${ModelName} \
+              --served-model-name ${ModelName} \
+              --tp $(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l | awk '{print $1}') \
+              --trust-remote-code \
+              --host 0.0.0.0 \
+              --port 8000 \
+              --mem-fraction-static ${SGMemFraction} \
+              --api-key "${API_KEY}" \
+              --max-total-tokens ${SGMaxTotalTokens}${Quantization}${SGVLParameters}"
             fi
-
-            MAX_TIMEOUT=3000
+            MAX_TIMEOUT=${WaitTime}
             INTERVAL=10
             MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
 
             for ((i=1; i<=MAX_ATTEMPTS; i++))
             do
-                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 20)
+                LATEST_LOG=$(docker logs ${Name} 2>&1 | tail -n 50)
                 if echo "$LATEST_LOG" | grep -q "Application startup complete."
                 then
                     exit 0
@@ -887,9 +1002,11 @@ Resources:
                     sleep $INTERVAL
                 fi
             done
+            echo "Failed to start the application after $MAX_TIMEOUT seconds."
+            exit 1
           - ModelName:
               Ref: ModelName
-            VLLM_API_KEY:
+            API_KEY:
               Fn::Join:
                 - '-'
                 - - 'sk'
@@ -912,6 +1029,22 @@ Resources:
                           - ModelMap
                           - Ref: ModelName
                           - VllmVersion
+            InstallSGLang:
+              Fn::If:
+                - SGLangVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade sglang==${SGVersion} && '
+                    - SGVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - SGVersion
+            Name:
+              Fn::If:
+                - IsVLLM
+                - 'vllm'
+                - 'sglang'
             GpuMemory:
               Fn::FindInMap:
                 - ModelMap
@@ -928,15 +1061,10 @@ Resources:
                 - ' --quantization fp8'
                 - ''
             DockerImage:
-              Fn::If:
-                - IsDefaultDockerImage
-                - Fn::FindInMap:
-                    - ModelMap
-                    - Ref: ModelName
-                    - DockerImage
-                - Ref: DockerImage
-            Script:
-              Ref: Script
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - DockerImage
             InstallVLPackage:
               Fn::If:
                 - IsVLModel
@@ -947,6 +1075,33 @@ Resources:
                 - IsVLModel
                 - ' --dtype bfloat16 --limit-mm-per-prompt image=5,video=5'
                 - ''
+            EngineType:
+              Ref: EngineType
+            SGDockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGDockerImage
+            SGMemFraction:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMemFraction
+            SGMaxTotalTokens:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMaxTotalTokens
+            SGVLParameters:
+              Fn::If:
+                - IsVLModel
+                - ' --chat-template qwen2-vl'
+                - ''
+            WaitTime:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - WaitTime
 Outputs:
   模型名称:
     Label:
@@ -1106,6 +1261,7 @@ Metadata:
       - Parameters:
           - ModelType
           - ModelName
+          - EngineType
           - PayType
           - PayPeriodUnit
           - PayPeriod
@@ -1124,6 +1280,3 @@ Metadata:
         Label:
           zh-cn: 网络配置
           en: Network Configuration
-    Hidden:
-      - DockerImage
-      - Script
