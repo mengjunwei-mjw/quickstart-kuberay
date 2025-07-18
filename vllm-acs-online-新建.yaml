@@ -1,0 +1,1824 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description:
+  en: Create acs Cluster And JumpBox Ecs, Deploy with kubectl -f yaml with new vpc
+  zh-cn: 创建acs集群和跳板机并使用kubectl部署(新建vpc)
+Conditions:
+  IsPublicEnabled:
+    Fn::Equals:
+      - Ref: SupportPublicAccess
+      - true
+  IsVLModel:
+    Fn::Or:
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-72B-Instruct'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-32B-Instruct'
+          - Ref: ModelName
+      - Fn::Equals:
+          - 'Qwen/Qwen2.5-VL-7B-Instruct'
+          - Ref: ModelName
+  IfPPU:
+    Fn::Or:
+      #      - Fn::Equals:
+      #          - Ref: GPUType
+      #          - 'Qwen3-Embedding-8B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-7B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-32B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-72B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-VL-7B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-VL-32B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen2.5-VL-72B-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen3-8B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen3-14B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen3-30B-A3B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen3-32B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Qwen3-235B-A22B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1_671B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1-0528-Qwen3-8B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1-0528_671B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1-Distill-Qwen-7B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1_32B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-R1_70B_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'DeepSeek-V3_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Kimi-K2-Instruct_PPU'
+Parameters:
+  ModelType:
+    Type: String
+    Label:
+      en: ModelName Type
+      zh-cn: 模型系列
+    Default: "Qwen3"
+    AllowedValues:
+      - Qwen3
+      - Qwen2.5
+      - Qwen-VL
+      - QwQ
+      - Deepseek
+      - Moonshot
+  ModelName:
+    Type: String
+    Label:
+      en: Model Name
+      zh-cn: 模型名称
+    Default: Qwen/Qwen3-32B
+    AllowedValues:
+      - Qwen/QwQ-32B
+      #      - Qwen/Qwen3-Embedding-8B
+      - Qwen/Qwen3-8B
+      - Qwen/Qwen3-14B
+      - Qwen/Qwen3-30B-A3B
+      - Qwen/Qwen3-30B-A3B-FP8
+      - Qwen/Qwen3-32B
+      - Qwen/Qwen3-32B-FP8
+      - Qwen/Qwen3-235B-A22B
+      - Qwen/Qwen3-235B-A22B-FP8
+      - Qwen/Qwen2.5-7B-Instruct
+      - Qwen/Qwen2.5-32B-Instruct
+      - Qwen/Qwen2.5-72B-Instruct
+      - Qwen/Qwen2.5-VL-7B-Instruct
+      - Qwen/Qwen2.5-VL-32B-Instruct
+      - Qwen/Qwen2.5-VL-72B-Instruct
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+      - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+      - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      - deepseek-ai/DeepSeek-R1
+      - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+      - deepseek-ai/DeepSeek-R1-0528
+      - deepseek-ai/DeepSeek-V3
+      - moonshotai/Kimi-K2-Instruct
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      ForceRadio: true
+      ValueLabelMapping:
+        Qwen/QwQ-32B: QwQ-32B
+        #        "Qwen/Qwen3-Embedding-8B": Qwen3-Embedding-8B
+        Qwen/Qwen3-32B: Qwen3-32B
+        Qwen/Qwen3-235B-A22B: Qwen3-235B-A22B
+        Qwen/Qwen3-235B-A22B-FP8: Qwen3-235B-A22B-FP8
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-32B: DeepSeek-R1-Distill-Qwen-32B
+        deepseek-ai/DeepSeek-R1-Distill-Llama-70B: DeepSeek-R1-Distill-Llama-70B
+        deepseek-ai/DeepSeek-R1: DeepSeek-R1-671B(FP8)
+        deepseek-ai/DeepSeek-R1-0528: DeepSeek-R1-0528(FP8)
+        Qwen/Qwen2.5-7B-Instruct: Qwen2.5-7B-Instruct
+        Qwen/Qwen2.5-32B-Instruct: Qwen2.5-32B-Instruct
+        Qwen/Qwen2.5-72B-Instruct: Qwen2.5-72B-Instruct
+        Qwen/Qwen2.5-VL-7B-Instruct: Qwen2.5-VL-7B-Instruct
+        Qwen/Qwen2.5-VL-32B-Instruct: Qwen2.5-VL-32B-Instruct
+        Qwen/Qwen2.5-VL-72B-Instruct: Qwen2.5-VL-72B-Instruct
+        deepseek-ai/DeepSeek-R1-0528-Qwen3-8B: DeepSeek-R1-0528-Qwen3-8B
+        deepseek-ai/DeepSeek-R1-Distill-Qwen-7B: DeepSeek-R1-Distill-Qwen-7B
+        Qwen/Qwen3-32B-FP8: Qwen3-32B-FP8
+        Qwen/Qwen3-30B-A3B-FP8: Qwen3-30B-A3B-FP8
+        Qwen/Qwen3-30B-A3B: Qwen3-30B-A3B
+        Qwen/Qwen3-8B: Qwen3-8B
+        Qwen/Qwen3-14B: Qwen3-14B
+        deepseek-ai/DeepSeek-V3: DeepSeek-V3
+        moonshotai/Kimi-K2-Instruct: Kimi-K2-Instruct
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Qwen3'
+              - ${ModelType}
+          Value:
+            #            - Qwen/Qwen3-Embedding-8B
+            - Qwen/Qwen3-8B
+            - Qwen/Qwen3-14B
+            - Qwen/Qwen3-30B-A3B
+            - Qwen/Qwen3-30B-A3B-FP8
+            - Qwen/Qwen3-32B
+            - Qwen/Qwen3-32B-FP8
+            - Qwen/Qwen3-235B-A22B
+            - Qwen/Qwen3-235B-A22B-FP8
+        - Condition:
+            Fn::Equals:
+              - 'Qwen2.5'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen2.5-7B-Instruct
+            - Qwen/Qwen2.5-32B-Instruct
+            - Qwen/Qwen2.5-72B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'Qwen-VL'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen2.5-VL-7B-Instruct
+            - Qwen/Qwen2.5-VL-32B-Instruct
+            - Qwen/Qwen2.5-VL-72B-Instruct
+        - Condition:
+            Fn::Equals:
+              - 'QwQ'
+              - ${ModelType}
+          Value:
+            - Qwen/QwQ-32B
+        - Condition:
+            Fn::Equals:
+              - 'Deepseek'
+              - ${ModelType}
+          Value:
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+            - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+            - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+            - deepseek-ai/DeepSeek-R1
+            - deepseek-ai/DeepSeek-R1-0528
+            - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+            - deepseek-ai/DeepSeek-V3
+        - Condition:
+            Fn::Equals:
+              - 'Moonshot'
+              - ${ModelType}
+          Value:
+            - moonshotai/Kimi-K2-Instruct
+  GPUType:
+    Type: String
+    Label:
+      en: GPUType
+      zh-cn: 选择GPU类型
+    AllowedValues:
+      - QwQ-32B_H20
+      #      - Qwen3-Embedding-8B_H20
+      #      - Qwen3-Embedding-8B_PPU
+      - Qwen3-8B_PPU
+      - Qwen3-14B_PPU
+      - Qwen3-14B_L20
+      - Qwen3-30B-A3B_PPU
+      - Qwen3-30B-A3B-FP8_H20
+      - Qwen3-32B_H20
+      - Qwen3-32B_PPU
+      - Qwen3-32B_FP8_H20
+      - Qwen3-235B-A22B_H20
+      - Qwen3-235B-A22B_PPU
+      - Qwen3-235B-A22B-FP8_H20
+      - Qwen2.5-7B-Instruct_PPU
+      - Qwen2.5-32B-Instruct_PPU
+      - Qwen2.5-72B-Instruct_PPU
+      - Qwen2.5-VL-7B-Instruct_PPU
+      - Qwen2.5-VL-32B-Instruct_PPU
+      - Qwen2.5-VL-72B-Instruct_PPU
+      - DeepSeek-R1_671B_PPU
+      - DeepSeek-R1_671B_H20
+      - DeepSeek-R1_671B_H20-3e
+      - DeepSeek-R1_32B_H20
+      - DeepSeek-R1_32B_H20-3e
+      - DeepSeek-R1_32B_PPU
+      - DeepSeek-R1_70B_H20
+      - DeepSeek-R1_70B_H20-3e
+      - DeepSeek-R1_70B_PPU
+      - DeepSeek-R1-0528_671B_PPU
+      - DeepSeek-R1-0528_671B_H20
+      - DeepSeek-R1-0528_671B_H20-3e
+      - DeepSeek-R1-Distill-Qwen-7B_PPU
+      - DeepSeek-R1-0528-Qwen3-8B_PPU
+      - DeepSeek-V3_PPU
+      - Kimi-K2-Instruct_PPU
+    Default: QwQ-32B_H20
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      ForceRadio: true
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/QwQ-32B
+          Value:
+            - QwQ-32B_H20
+        #        - Condition:
+        #            Fn::Equals:
+        #              - ${ModelName}
+        #              - Qwen/Qwen3-Embedding-8B
+        #          Value:
+        #            - Qwen3-Embedding-8B_H20
+        #            - Qwen3-Embedding-8B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-7B-Instruct
+          Value:
+            - Qwen2.5-7B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-32B-Instruct
+          Value:
+            - Qwen2.5-32B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-72B-Instruct
+          Value:
+            - Qwen2.5-72B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-VL-7B-Instruct
+          Value:
+            - Qwen2.5-VL-7B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-VL-32B-Instruct
+          Value:
+            - Qwen2.5-VL-32B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen2.5-VL-72B-Instruct
+          Value:
+            - Qwen2.5-VL-72B-Instruct_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-32B
+          Value:
+            - Qwen3-32B_H20
+            - Qwen3-32B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-235B-A22B
+          Value:
+            - Qwen3-235B-A22B_H20
+            - Qwen3-235B-A22B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-235B-A22B-FP8
+          Value:
+            - Qwen3-235B-A22B-FP8_H20
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+          Value:
+            - DeepSeek-R1_32B_H20
+            - DeepSeek-R1_32B_H20-3e
+            - DeepSeek-R1_32B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+          Value:
+            - DeepSeek-R1_70B_H20
+            - DeepSeek-R1_70B_H20-3e
+            - DeepSeek-R1_70B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1
+          Value:
+            - DeepSeek-R1_671B_H20
+            - DeepSeek-R1_671B_H20-3e
+            - DeepSeek-R1_671B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1-0528
+          Value:
+            - DeepSeek-R1-0528_671B_H20
+            - DeepSeek-R1-0528_671B_H20-3e
+            - DeepSeek-R1-0528_671B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-8B
+          Value:
+            - Qwen3-8B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-14B
+          Value:
+            - Qwen3-14B_PPU
+            - Qwen3-14B_L20
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-30B-A3B
+          Value:
+            - Qwen3-30B-A3B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-30B-A3B-FP8
+          Value:
+            - Qwen3-30B-A3B-FP8_H20
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - Qwen/Qwen3-32B-FP8
+          Value:
+            - Qwen3-32B_FP8_H20
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+          Value:
+            - DeepSeek-R1-Distill-Qwen-7B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+          Value:
+            - DeepSeek-R1-0528-Qwen3-8B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - deepseek-ai/DeepSeek-V3
+          Value:
+            - DeepSeek-V3_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - moonshotai/Kimi-K2-Instruct
+          Value:
+            - Kimi-K2-Instruct_PPU
+      ValueLabelMapping:
+        QwQ-32B_H20: GU8TF
+        #        Qwen3-Embedding-8B_H20: GU8TF
+        #        Qwen3-Embedding-8B_PPU: P16EN
+        Qwen3-32B_H20: GU8TF
+        Qwen3-32B_PPU: P16EN
+        Qwen3-235B-A22B_H20: GU8TF
+        Qwen3-235B-A22B_PPU: P16EN
+        Qwen3-235B-A22B-FP8_H20: GU8TF
+        Qwen2.5-7B-Instruct_PPU: P16EN
+        Qwen2.5-32B-Instruct_PPU: P16EN
+        Qwen2.5-72B-Instruct_PPU: P16EN
+        Qwen2.5-VL-7B-Instruct_PPU: P16EN
+        Qwen2.5-VL-32B-Instruct_PPU: P16EN
+        Qwen2.5-VL-72B-Instruct_PPU: P16EN
+        DeepSeek-R1_671B_H20: GU8TF
+        DeepSeek-R1_671B_H20-3e: GU8TEF
+        DeepSeek-R1_671B_PPU: P16EN
+        DeepSeek-R1-0528_671B_H20: GU8TF
+        DeepSeek-R1-0528_671B_H20-3e: GU8TEF
+        DeepSeek-R1-0528_671B_PPU: P16EN
+        DeepSeek-R1_32B_H20: GU8TF
+        DeepSeek-R1_32B_H20-3e: GU8TEF
+        DeepSeek-R1_32B_PPU: P16EN
+        DeepSeek-R1_70B_H20: GU8TF
+        DeepSeek-R1_70B_H20-3e: GU8TEF
+        DeepSeek-R1_70B_PPU: P16EN
+        Qwen3-8B_PPU: P16EN
+        Qwen3-14B_PPU: P16EN
+        Qwen3-14B_L20: L20
+        Qwen3-30B-A3B_PPU: P16EN
+        Qwen3-30B-A3B-FP8_H20: GU8TF
+        Qwen3-32B_FP8_H20: GU8TF
+        DeepSeek-R1-Distill-Qwen-7B_PPU: P16EN
+        DeepSeek-R1-0528-Qwen3-8B_PPU: P16EN
+        DeepSeek-V3_PPU: P16EN
+        Kimi-K2-Instruct_PPU: P16EN
+  GPUAmount:
+    Type: String
+    Label:
+      en: GPU Amount
+      zh-cn: GPU数量
+    AllowedValues:
+      - 1
+      - 2
+      - 4
+      - 8
+      - 16
+    Default: 1
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      ForceRadio: true
+      AllowedValues:
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - QwQ-32B_H20
+              #              - Fn::Equals:
+              #                  - ${GPUType}
+              #                  - Qwen3-Embedding-8B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-30B-A3B-FP8_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B-FP8_H20
+          Value:
+            - 1
+            - 2
+            - 4
+            - 8
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_H20
+          Value:
+            - 2
+            - 4
+            - 8
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-235B-A22B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_H20-3e
+          Value:
+            - 8
+        - Condition:
+            Fn::Or:
+              #              - Fn::Equals:
+              #                  - ${GPUType}
+              #                  - Qwen3-Embedding-8B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-7B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-32B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-7B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-32B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-8B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-14B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-30B-A3B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-Distill-Qwen-7B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528-Qwen3-8B_PPU
+          Value:
+            - 1
+            - 2
+            - 4
+            - 8
+            - 16
+        - Condition:
+            Fn::Equals:
+              - ${GPUType}
+              - Qwen3-14B_L20
+          Value:
+            - 1
+            - 2
+            - 4
+            - 8
+        - Condition:
+            Fn::Equals:
+              - ${GPUType}
+              - Qwen3-235B-A22B_PPU
+          Value:
+            - 8
+            - 16
+        - Condition:
+            Fn::Equals:
+              - ${GPUType}
+              - Qwen3-235B-A22B-FP8_H20
+          Value:
+            - 4
+            - 8
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-72B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-72B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_PPU
+          Value:
+            - 2
+            - 4
+            - 8
+            - 16
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-V3_PPU
+          Value:
+            - 16
+        - Condition:
+            Fn::Equals:
+              - ${GPUType}
+              - Kimi-K2-Instruct_PPU
+          Value:
+            - 16
+  WhitelistConfirmation:
+    Type: "String"
+    Label:
+      en: "Whitelist Confirmation"
+      zh-cn: "白名单配置确认"
+    AssociationProperty: "AlertCheckbox"
+    AssociationPropertyMetadata:
+      Description:
+        zh-cn: |
+          <strong>重要前置条件：</strong>
+          使用本服务前，请确保已为P16EN/GU8TF/L20实例正确配置白名单规则，请联系客服、销售或提交工单加白。
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">提交工单</a>
+        en: |
+          <strong>Important Preconditions:</strong>
+          Before using this service, please ensure that the whitelist rule for P16EN/GU8TF/L20 instances is correctly configured. Contact customer service, sales, or submit a ticket to add the whitelist.
+          <a href="https://smartservice.console.aliyun.com/service/create-ticket" target="_blank">Submit a ticket</a>
+      ConfirmText:
+        zh-cn: "我已确认完成白名单配置"
+        en: "I have confirmed the whitelist configuration"
+      Alert: true
+      Type: "warning"
+      MustChecked: true
+  SupportPublicAccess:
+    Type: Boolean
+    Label:
+      zh-cn: 支持公网访问
+      en: Support Public Access
+  EcsZoneId:
+    Type: String
+    Label:
+      en: ECS Zone ID
+      zh-cn: ECS 可用区
+    AllowedValues:
+      - cn-hangzhou-b
+      - cn-hangzhou-g
+      - cn-hangzhou-h
+      - cn-hangzhou-i
+      - cn-hangzhou-j
+      - cn-hangzhou-k
+      - cn-beijing-c
+      - cn-beijing-d
+      - cn-beijing-e
+      - cn-beijing-f
+      - cn-beijing-g
+      - cn-beijing-h
+      - cn-beijing-i
+      - cn-beijing-j
+      - cn-beijing-k
+      - cn-beijing-l
+      - cn-shanghai-a
+      - cn-shanghai-b
+      - cn-shanghai-e
+      - cn-shanghai-f
+      - cn-shanghai-g
+      - cn-shanghai-m
+      - cn-shanghai-l
+      - cn-shanghai-n
+      - cn-wulanchabu-a
+      - cn-wulanchabu-b
+      - cn-wulanchabu-c
+      - cn-shenzhen-c
+      - cn-shenzhen-d
+      - cn-shenzhen-e
+      - cn-shenzhen-f
+      - cn-hongkong-b
+      - cn-hongkong-c
+      - cn-hongkong-d
+      - ap-southeast-1a
+      - ap-southeast-1b
+      - ap-southeast-1c
+    Description:
+      zh-cn: ECS跳板机可用区（同时也是ACS备可用区），该跳板机用于在ACS集群上执行kubectl部署命令，创建成功后如不需要可以手动释放
+      en: ECS jump box zone id, used to execute kubectl commands on ACS cluster, created successfully after no need to manually release
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    AssociationPropertyMetadata:
+      ExclusiveTo:
+        - AcsZoneId
+  AcsZoneId:
+    Type: String
+    Label:
+      en: ACS Zone ID
+      zh-cn: ACS 可用区
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    AssociationPropertyMetadata:
+      ExclusiveTo:
+        - EcsZoneId
+      AllowedValues:
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - QwQ-32B_H20
+              #              - Fn::Equals:
+              #                  - ${GPUType}
+              #                  - Qwen3-Embedding-8B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-235B-A22B_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-235B-A22B-FP8_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-30B-A3B-FP8_H20
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B-FP8_H20
+          Value:
+            - cn-wulanchabu-a
+            - cn-beijing-d
+            - cn-shanghai-f
+            - cn-hangzhou-b
+            - ap-southeast-1a
+            - ap-southeast-1b
+            - ap-southeast-1c
+        - Condition:
+            Fn::Or:
+              #              - Fn::Equals:
+              #                  - ${GPUType}
+              #                  - Qwen3-Embedding-8B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-32B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-235B-A22B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-7B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-32B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-72B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-7B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-32B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen2.5-VL-72B-Instruct_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-8B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-14B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Qwen3-30B-A3B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-Distill-Qwen-7B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528-Qwen3-8B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-V3_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Kimi-K2-Instruct_PPU
+          Value:
+            - cn-wulanchabu-c
+            - cn-hangzhou-b
+            - cn-beijing-d
+            - cn-shanghai-f
+            - cn-shanghai-o
+        - Condition:
+            Fn::Or:
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_32B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_70B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1_671B_H20-3e
+              - Fn::Equals:
+                  - ${GPUType}
+                  - DeepSeek-R1-0528_671B_H20-3e
+          Value:
+            - cn-shanghai-f
+            - cn-hongkong-d
+        - Condition:
+            Fn::Equals:
+              - ${GPUType}
+              - Qwen3-14B_L20
+          Value:
+            - cn-hangzhou-b
+            - cn-beijing-l
+            - cn-shanghai-l
+            - cn-shanghai-n
+            - cn-shenzhen-c
+            - ap-southeast-1a
+            - ap-southeast-1b
+  Replicas:
+    Type: Number
+    Label:
+      en: Replicas
+      zh-cn: Pod数量
+    MinValue: 1
+    Default: 1
+    Description:
+      en: The number of replicas, the load balancer will automatically distribute requests to one pod
+      zh-cn: 创建的pod数量，负载均衡会根据流量自动分配请求到某一个pod
+Resources:
+  RandomPassword:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 11
+      character_classes:
+        - class: "lowercase"
+          min: 4
+        - class: "uppercase"
+          min: 4
+        - class: "digits"
+          min: 2
+      character_sequences:
+        - sequence: "!@#$^*-+="
+  Vpc:
+    Type: ALIYUN::ECS::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+  EcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    DependsOn: Vpc
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock: 192.168.0.0/24
+      ZoneId:
+        Ref: EcsZoneId
+  AcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    DependsOn: Vpc
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock: 192.168.1.0/24
+      ZoneId:
+        Ref: AcsZoneId
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: Vpc
+      SecurityGroupIngress:
+        - PortRange: '22/22'
+          Priority: 1
+          SourceCidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          NicType: intranet
+      SecurityGroupEgress:
+        - PortRange: '-1/-1'
+          Priority: 1
+          IpProtocol: all
+          DestCidrIp: 0.0.0.0/0
+          NicType: intranet
+  OSSBucket:
+    Type: 'ALIYUN::OSS::Bucket'
+    Properties:
+      DeletionForce: true
+      BucketName:
+        Ref: ALIYUN::StackName
+  OSSRamUser:
+    DependsOn: OSSBucket
+    Type: ALIYUN::RAM::User
+    Properties:
+      UserName:
+        Ref: ALIYUN::StackName
+      Policies:
+        - PolicyName:
+            Ref: ALIYUN::StackName
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - oss:*
+                Effect: Allow
+                Resource:
+                  - Fn::Sub:
+                      - "acs:oss:*:*:${BucketName}"
+                      - BucketName:
+                          Fn::GetAtt:
+                            - OSSBucket
+                            - Name
+                  - Fn::Sub:
+                      - "acs:oss:*:*:${BucketName}/*"
+                      - BucketName:
+                          Fn::GetAtt:
+                            - OSSBucket
+                            - Name
+            Version: '1'
+  AccessKey:
+    DependsOn: OSSRamUser
+    Type: ALIYUN::RAM::AccessKey
+    Properties:
+      UserName:
+        Ref: ALIYUN::StackName
+  AcsCluster:
+    Type: ALIYUN::ACS::Cluster
+    Properties:
+      Name:
+        Ref: ALIYUN::StackName
+      EndpointPublicAccess: false
+      ComputeClass: gpu
+      ServiceCidr: 10.0.0.0/16
+      ClusterSpec: ack.pro.small
+      LoggingType: sls
+      SnatEntry: true
+      # 不可修改两个vsw的顺序，否则可能创建报错
+      VSwitchIds:
+        - Ref: EcsVSwitch
+        - Ref: AcsVSwitch
+      VpcId:
+        Ref: Vpc
+      ZoneIds:
+        - Ref: EcsZoneId
+        - Ref: AcsZoneId
+      PodVSwitchIds:
+        - Ref: EcsVSwitch
+        - Ref: AcsVSwitch
+      ServiceDiscoveryTypes:
+        - CoreDNS
+      DeleteOptions:
+        - DeleteMode: delete
+          ResourceType: SLS_Data
+        - DeleteMode: delete
+          ResourceType: SLS_ControlPlane
+      PodPostpaidSpec:
+        Replicas:
+          Ref: Replicas
+        GpuQuantityConfigs:
+          GpuModel:
+            Fn::FindInMap:
+              - ModelMapping
+              - GPUModelMap
+              - Ref: GPUType
+          GpuQuantity:
+            Ref: GPUAmount
+          ComputeQos: default
+          Arch: Intel
+        MemGib:
+          Fn::If:
+            - IfPPU
+            - Fn::FindInMap:
+                - ModelMapping
+                - PPU810E_MemoryMap
+                - Ref: GPUAmount
+            - '128'
+        CpuCore:
+          Fn::If:
+            - IfPPU
+            - Fn::FindInMap:
+                - ModelMapping
+                - PPU810E_CPUMap
+                - Ref: GPUAmount
+            - '16'
+  ClusterApplication:
+    Type: ALIYUN::CS::ClusterApplication
+    DependsOn:
+      - AcsCluster
+      - AccessKey
+    Properties:
+      YamlContent:
+        Fn::Sub:
+          - |
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: oss-secret
+              namespace: llm-model
+            stringData:
+              akId: ${AccessKeyId}
+              akSecret: ${AccessKeySecret}
+          - AccessKeyId:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeyId
+            AccessKeySecret:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeySecret
+      ClusterId:
+        Fn::GetAtt:
+          - AcsCluster
+          - ClusterId
+      DefaultNamespace: llm-model
+  EcsInstanceJumpBox:
+    Type: ALIYUN::ECS::InstanceGroup
+    Properties:
+      InstanceName:
+        Fn::Join:
+          - '-'
+          - - Ref: ALIYUN::StackName
+            - jumpbox
+      ImageId:
+        Fn::FindInMap:
+          - ModelMapping
+          - ModelImageMap
+          - Ref: GPUType
+      InstanceType: 'ecs.u1-c1m2.xlarge'
+      #      InstanceType: 'ecs.c7nex.16xlarge'
+      ZoneId:
+        Ref: EcsZoneId
+      VpcId:
+        Ref: Vpc
+      VSwitchId:
+        Ref: EcsVSwitch
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      AllocatePublicIP: false
+      Password:
+        Ref: RandomPassword
+      MaxAmount: 1
+      InstanceChargeType: PostPaid
+      SystemDiskSize:
+        Fn::FindInMap:
+          - ModelMapping
+          - ModelDiskSizeMap
+          - Ref: GPUType
+      SystemDiskCategory: cloud_essd
+  RunAllCommands:
+    Type: ALIYUN::ECS::RunCommand
+    DependsOn:
+      - EcsInstanceJumpBox
+      - AcsCluster
+      - OSSBucket
+      - RandomApiKey
+      - ClusterApplication
+    Properties:
+      Sync: true
+      Type: RunShellScript
+      InstanceIds:
+        - Fn::Select:
+            - 0
+            - Fn::GetAtt:
+                - EcsInstanceJumpBox
+                - InstanceIds
+      Timeout: '86400'  # 延长超时时间
+      CommandContent:
+        Fn::Sub:
+          - |
+            #!/bin/bash
+            exec > >(cat >>/tmp/deploy.log) 2> >(tee -a /tmp/deploy.log >&2)
+            set -e
+            
+            echo "Checking kubectl installation..."
+            if ! command -v kubectl &>/dev/null; then
+              echo "Installing kubectl..."
+              wget "{{ computenest::file::kubectl }}" -O kubectl >>/tmp/deploy.log 2>&1
+              install -o root -g root -m 0755 kubectl /usr/bin/kubectl >>/tmp/deploy.log 2>&1
+              chmod +x /usr/bin/kubectl
+            fi
+            echo "Ensuring kubeconfig exists..."
+            mkdir -p ~/.kube
+            [ [ -s ~/.kube/config ] ] || echo '${kubeConfig}' > ~/.kube/config
+            sleep 10
+            
+            # --- 2. 安装模板渲染工具 ---
+            echo "Installing jinja2-render..."
+            if ! command -v jinja2-render &> /dev/null; then
+              echo "Downloading jinja2-render wheel package..."
+              wget "{{ computenest::file::jinja2 }}" -O jinja2_renderer-0.1.0-py3-none-any.whl >> /tmp/deploy.log 2>&1
+            
+              echo "Installing jinja2-render from wheel..."
+              pip3 install jinja2_renderer-0.1.0-py3-none-any.whl >> /tmp/deploy.log 2>&1
+              cp /usr/local/bin/jinja2-render /usr/bin/
+            
+              # 清理下载的文件
+              rm -f jinja2_renderer-0.1.0-py3-none-any.whl
+            
+              # 验证安装
+              if command -v jinja2-render &> /dev/null; then
+                echo "jinja2-render installed successfully."
+              else
+                echo "Failed to install jinja2-render" >&2
+                exit 1
+              fi
+            else
+              echo "jinja2-render already installed."
+            fi
+            
+            # --- 3. 配置 OSS 和上传模型 ---
+            echo "Checking ossutil installation..."
+            if ! command -v ossutil &> /dev/null; then
+              echo "Configuring OSS..."
+              sudo -v >> /tmp/deploy.log 2>&1
+            
+              # 安装ossutil2.0
+              wget "{{ computenest::file::ossutil }}" -O ossutil.zip >> /tmp/deploy.log 2>&1
+              unzip ossutil.zip >> /tmp/deploy.log 2>&1
+              cd ossutil-2.1.0-linux-amd64
+              chmod 755 ossutil >> /tmp/deploy.log 2>&1
+              mv -f ossutil /usr/local/bin/ && sudo ln -sf /usr/local/bin/ossutil /usr/bin/ossutil >> /tmp/deploy.log 2>&1
+              ossutil >> /tmp/deploy.log 2>&1
+            else
+              echo "ossutil already installed."
+            fi
+            cd ..
+            cat >> /usr/bin/oss.cfg <<EOF
+            [Credentials]
+            endpoint = oss-${regionId}-internal.aliyuncs.com
+            accessKeyID = ${accessKeyId}
+            accessKeySecret = ${accessKeySecret}
+            region = ${regionId}
+            EOF
+            
+            sysctl -w net.ipv4.tcp_window_scaling=1
+            sysctl -w net.core.rmem_max=16777216
+            sysctl -w net.core.wmem_max=16777216
+            
+            # 如果model是DeepSeek-R1_671B_PPU，替换config.json中的 quantization_config
+            if [ "${model}" == "DeepSeek-R1_671B_PPU" ] || [ "${model}" == "DeepSeek-R1-0528_671B_PPU" ] || [ "${model}" == "DeepSeek-V3_PPU" ]; then
+              echo "Replacing quantization_config in config.json..."
+              CONFIG_FILE="/root/llm-model/${modelName}/config.json"
+              cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
+              jq '.quantization_config = {
+                  "bits": 8,
+                  "group_size": 128,
+                  "desc_act": false,
+                  "quant_method": "gptq-fp8",
+                  "sym": true
+              }' "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
+            
+              # 替换原文件
+              mv -f "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+            fi
+            ossutil --config-file /usr/bin/oss.cfg cp -r /root/llm-model/${modelName} oss://${bucketName}/llm-model/${modelName} --ignore-existing | tee download.log
+            
+            # --- 4. 获取Jinja2模板文件 ---
+            echo "Getting Jinja2 template file..."
+            wget "{{ computenest::file::template-j2 }}" -O template.j2 >> /tmp/deploy.log 2>&1
+            if [ ! -f "template.j2" ]; then
+              echo "Error: template.j2 file not found"
+              exit 1
+            fi
+            
+            # --- 5. 参数计算 ---
+            echo "Creating parameter generation script..."
+            # 判断GPU类型
+            gpu_type_is_ppu="false"
+            if [[ "${model}" == *"PPU"* ]]; then
+                gpu_type_is_ppu="true"
+            fi
+            
+            # 判断是否为DeepSeek FP8 PPU模型
+            is_deepseek_fp8_ppu_model="false"
+            if [[ "${model}" == "DeepSeek-R1-0528_671B_PPU" ]] || [[ "${model}" == "DeepSeek-R1-0528-Qwen3-8B_PPU" ]] || [[ "${model}" == "DeepSeek-V3_PPU" ]]; then
+                is_deepseek_fp8_ppu_model="true"
+            fi
+            
+            # 确定GPU模型系列
+            gpu_model_series="H20"
+            if [[ "${model}" == *"H20-3e"* ]]; then
+                gpu_model_series="H20-3e"
+            elif [[ "${model}" == *"PPU"* ]]; then
+                gpu_model_series="PPU810E"
+            elif [[ "${model}" == *"L20"* ]]; then
+                gpu_model_series="L20"
+            fi
+            
+            # 判断是否为VL模型
+            is_vl_model="false"
+            if [[ "${modelName}" == *"VL"* ]]; then
+                is_vl_model="true"
+            fi
+            
+            # 判断是否为FP8模型
+            is_fp8_model="false"
+            if [[ "${modelName}" == *"FP8"* ]] || [[ "${model}" == *"FP8"* ]]; then
+                is_fp8_model="true"
+            fi
+            
+            # 是否为Kimi-K2-Instruct模型
+            is_kimi_k2_instruct_model="false"
+            if [[ "${model}" == "Kimi-K2-Instruct_PPU" ]]; then
+                is_kimi_k2_instruct_model="true"
+            fi
+            
+            # 写入parameters.yaml
+            cat > parameters.yaml << EOF
+            gpu_type_is_ppu: $gpu_type_is_ppu
+            gpu_model_series: "$gpu_model_series"
+            is_vl_model: $is_vl_model
+            is_fp8_model: $is_fp8_model
+            is_deepseek_fp8_ppu_model: $is_deepseek_fp8_ppu_model
+            is_kimi_k2_instruct_model: $is_kimi_k2_instruct_model
+            support_public_access: ${supportPublicAccess}
+            EOF
+            
+            echo "参数已写入 parameters.yaml"
+            
+            # 渲染模板
+            if [[ -f "template.j2" ]]; then
+                jinja2-render template.j2 -c parameters.yaml -o model.yaml
+                echo "模板已渲染到 model.yaml"
+            else
+                echo "错误: template.j2 文件不存在"
+                exit 1
+            fi
+            
+            # --- 6. 替换模板中的变量并部署模型 ---
+            echo "Deploying model..."
+            DEPLOYMENT=${deploymentName}
+            
+            # 替换模板中的变量
+            sed -i "s|\${!ModelName}|${modelName}|g" model.yaml
+            sed -i "s|\${!DeploymentName}|${deploymentName}|g" model.yaml
+            sed -i "s|\${!VllmApiKey}|${vllmApiKey}|g" model.yaml
+            sed -i "s|\${!RegionId}|${regionId}|g" model.yaml
+            sed -i "s|\${!GPUAmount}|${gpuAmount}|g" model.yaml
+            sed -i "s|\${!BucketName}|${bucketName}|g" model.yaml
+            sed -i "s|\${!AccessKeyId}|${accessKeyId}|g" model.yaml
+            sed -i "s|\${!AccessKeySecret}|${accessKeySecret}|g" model.yaml
+            sed -i "s|\${!Label}|${label}|g" model.yaml
+            sed -i "s|\${!Replicas}|${replicas}|g" model.yaml
+            
+            # 设置PPU对应的CPU和Memory
+            if [[ "${model}" == *"PPU"* ]]; then
+                echo "检测到PPU型号，根据GPU数量配置资源..."
+                sed -i "s|\${!CPUAmount}|${cpuAmount}|g" model.yaml
+                sed -i "s|\${!Memory}|${memory}Gi|g" model.yaml
+                echo "PPU资源配置完成: CPU=${cpuAmount}核, 内存=${memory}GB"
+            fi
+            
+            cat model.yaml && kubectl apply -f model.yaml --validate=false
+            echo "Monitoring deployment: $DEPLOYMENT"
+            NAMESPACE="llm-model"
+            MAX_ATTEMPTS=300
+            INTERVAL=20
+            SUCCESS=false
+            for ((i=1; i<=MAX_ATTEMPTS; i++)); do
+              POD=$(kubectl get pods -n "$NAMESPACE" -l app="$DEPLOYMENT" -o jsonpath='{.items[0].metadata.name}')
+              if [ -z "$POD" ]; then
+                  echo "Waiting for pod creation... ($i/$MAX_ATTEMPTS)"
+              else
+                  CONTAINER_INSTANCE_STATUS=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="ContainerInstanceCreated")].status}' 2>/dev/null)
+                  CONTAINER_INSTANCE_REASON=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="ContainerInstanceCreated")].reason}' 2>/dev/null)
+            
+                  if [[ "$CONTAINER_INSTANCE_STATUS" == "False" ]]; then
+                    if [[ "$CONTAINER_INSTANCE_REASON" == *"FailedScheduling"* ]]; then
+                      echo "Error: ContainerInstanceCreated failed due to scheduling failure!"
+                      echo "Pod $POD is in phase: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                      echo "Exiting due to scheduling error."
+                      SUCCESS=false
+                      break
+                    elif [[ "$CONTAINER_INSTANCE_REASON" == "FeatureGetNoPermission" ]]; then
+                      echo "Error: ContainerInstanceCreated failed due to permission issue: FeatureGetNoPermission"
+                      echo "Pod $POD is in phase: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                      echo "请检查 GPU 资源访问权限：PPU/H20/H20-3e/L20 实例是否已正确配置白名单？"
+                      echo "Exiting due to permission error."
+                      SUCCESS=false
+                      break
+                    fi
+                  fi
+            
+                  READY=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.containerStatuses[0].ready}')
+                  PHASE=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.status.phase}')
+                  if [[ "$READY" == "true" && "$PHASE" == "Running" ]]; then
+                      echo "Pod $POD is ready!"
+                      SUCCESS=true
+                      break
+                  else
+                      echo "Pod $POD status: $PHASE (Attempt $i/$MAX_ATTEMPTS)"
+                  fi
+              fi
+              sleep $INTERVAL
+            done
+            
+              # 处理结果
+            if [ "$SUCCESS" = "true" ]; then
+                echo "Deployment succeeded"
+            else
+                echo "GPU库存不足，Pod拉起失败" >&2
+                echo "Pod 状态信息：" >&2
+                kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{range .status.containerStatuses[*]}Container: {.name} | Ready: {.ready} | State: {.state}{"\n"}{end}' >&2 || true                                                                                       
+                echo "最近事件：" >&2
+                kubectl get events --field-selector involvedObject.name="$POD" -n "$NAMESPACE" --sort-by='.lastTimestamp' -o jsonpath='{range .items[*]}{.lastTimestamp} {.reason} {.message}{"\n"}{end}' >&2 || true
+                exit 1
+            fi
+            
+            # --- 7. 检测Private Service是否正常（最大15min）---
+            # 新增：获取 Private Service 的 LoadBalancer IP
+            MAX_ATTEMPTS=90
+            INTERVAL=10
+            SERVICE_NAME="svc-private"
+            PRIVATE_IP=""
+            for ((i=1; i<=MAX_ATTEMPTS; i++)); do
+              PRIVATE_IP=$(kubectl get service "$SERVICE_NAME" -n "$NAMESPACE" -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+              if [[ -n "$PRIVATE_IP" && "$PRIVATE_IP" != "<pending>" ]]; then
+                echo "Private Service IP: $PRIVATE_IP" >&2
+                break
+              else
+                echo "Waiting for IP... (Attempt $i/$MAX_ATTEMPTS)" >&2
+                sleep $INTERVAL
+              fi
+            done
+              if [[ -z "$PRIVATE_IP" || "$PRIVATE_IP" == "<pending>" ]]; then
+                echo "Failed to get Private Service IP after $MAX_ATTEMPTS attempts" >&2
+                exit 1
+              fi
+            
+              # --- 8. 检测发送响应消息是否正常（最大10min）---
+              set +e
+              echo "Testing Private Service connectivity..."
+              MAX_ATTEMPTS=20
+              INTERVAL=30
+              SUCCESS=false
+              for ((i=1; i<=MAX_ATTEMPTS; i++)); do
+                # 发送请求并捕获响应
+                RESPONSE=$(curl --max-time 10 -s -w "%{http_code}" \
+                  -X POST "http://$PRIVATE_IP:8000/v1/chat/completions" \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer ${vllmApiKey}" \
+                  -d '{"model": "${modelName}", "messages": [{"role": "user", "content": "你是什么？"}], "max_tokens": 1, "temperature": 0, "top_p": 0.9, "seed": 10, "stream": true}' \
+                  2>>/tmp/deploy.log)
+              # 检查 curl 是否失败
+              curl_exit_code=$?
+              echo "curl 退出码: $curl_exit_code" >&2
+            
+              if [ $curl_exit_code -ne 0 ]; then
+                echo "curl 命令失败，退出码 $curl_exit_code，重试..." >&2
+                sleep $INTERVAL
+                continue
+              fi
+              HTTP_CODE=${!RESPONSE: -3}  # 提取 HTTP 状态码
+              RESPONSE_BODY=${!RESPONSE%???}  # 提取响应体
+            
+            
+              if [[ "$HTTP_CODE" == "200" && -n "$RESPONSE_BODY" ]]; then
+                echo "响应内容：$RESPONSE_BODY" >&2
+                SUCCESS=true
+                break
+              else
+                echo "尝试 $i/$MAX_ATTEMPTS 失败 (HTTP 状态码: $HTTP_CODE)" >&2
+              fi
+              if [[ $i -lt $MAX_ATTEMPTS ]]; then
+                sleep $INTERVAL
+              fi
+            done
+            
+            set -e
+            if [ "$SUCCESS" != "true" ]; then
+              echo "集群网络问题" >&2
+              exit 1
+            fi
+          - kubeConfig:
+              Fn::GetAtt:
+                - AcsCluster
+                - PrivateUserKubConfig
+            accessKeyId:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeyId
+            accessKeySecret:
+              Fn::GetAtt:
+                - AccessKey
+                - AccessKeySecret
+            regionId:
+              Ref: ALIYUN::Region
+            bucketName:
+              Fn::GetAtt:
+                - OSSBucket
+                - Name
+            model:
+              Ref: GPUType
+            modelName:
+              Fn::FindInMap:
+                - ModelMapping
+                - ModelNameMap
+                - Ref: GPUType
+            deploymentName:
+              Fn::FindInMap:
+                - ModelMapping
+                - DeploymentName
+                - Ref: GPUType
+            vllmApiKey:
+              Fn::Join:
+                - '-'
+                - - 'sk'
+                  - Fn::GetAtt:
+                      - RandomApiKey
+                      - value
+            label:
+              Fn::FindInMap:
+                - ModelMapping
+                - DeploymentName
+                - Ref: GPUType
+            supportPublicAccess:
+              Ref: SupportPublicAccess
+            gpuAmount:
+              Ref: GPUAmount
+            cpuAmount:
+              Fn::FindInMap:
+                - ModelMapping
+                - PPU810E_CPUMap
+                - Ref: GPUAmount
+            memory:
+              Fn::FindInMap:
+                - ModelMapping
+                - PPU810E_MemoryMap
+                - Ref: GPUAmount
+            replicas:
+              Ref: Replicas
+  RandomApiKey:
+    Type: ALIYUN::RandomString
+    Properties:
+      length: 29
+      character_classes:
+        - class: lowercase
+          min: 1
+        - class: digits
+          min: 1
+  PrivateIngressResources:
+    Type: DATASOURCE::CS::ClusterApplicationResources
+    DependsOn:
+      - RunAllCommands
+    Properties:
+      Namespace: llm-model
+      Kind: Service
+      FirstMatch: True
+      ApiVersion: v1
+      JsonPath: $.status.loadBalancer.ingress[0].ip
+      ClusterId:
+        Fn::GetAtt:
+          - AcsCluster
+          - ClusterId
+      Name: svc-private
+  PublicIngressResources:
+    Type: DATASOURCE::CS::ClusterApplicationResources
+    DependsOn:
+      - RunAllCommands
+    Condition: IsPublicEnabled
+    Properties:
+      Namespace: llm-model
+      Kind: Service
+      FirstMatch: True
+      ApiVersion: v1
+      JsonPath: $.status.loadBalancer.ingress[0].ip
+      ClusterId:
+        Fn::GetAtt:
+          - AcsCluster
+          - ClusterId
+      Name: svc-public
+Mappings:
+  ModelMapping:
+    ModelImageMap:
+      'QwQ-32B_H20': 'm-qwq-32b-h20'
+      #      'Qwen3-Embedding-8B_H20': 'm-qwen3-embedding-8b'
+      #      'Qwen3-Embedding-8B_PPU': 'm-qwen3-embedding-8b'
+      'Qwen3-32B_H20': 'm-qwen3-32b'
+      'Qwen3-32B_PPU': 'm-qwen3-32b'
+      'Qwen3-235B-A22B_H20': 'm-qwen3-235b-a22b'
+      'Qwen3-235B-A22B_PPU': 'm-qwen3-235b-a22b'
+      'Qwen3-235B-A22B-FP8_H20': 'm-qwen3-235b-a22b-fp8'
+      'Qwen2.5-7B-Instruct_PPU': 'm-qwen2_5-7b-instruct'
+      'Qwen2.5-32B-Instruct_PPU': 'm-qwen2_5-32b-instruct'
+      'Qwen2.5-72B-Instruct_PPU': 'm-qwen2_5-72b-instruct'
+      'Qwen2.5-VL-7B-Instruct_PPU': 'm-qwen-vl-7b-instruct'
+      'Qwen2.5-VL-32B-Instruct_PPU': 'm-qwen-vl-32b-instruct'
+      'Qwen2.5-VL-72B-Instruct_PPU': 'm-qwen-vl-72b-instruct'
+      'DeepSeek-R1_671B_H20': 'm-deepseek-r1-671b'
+      'DeepSeek-R1_671B_H20-3e': 'm-deepseek-r1-671b'
+      'DeepSeek-R1_671B_PPU': 'm-deepseek-r1-671b'
+      'DeepSeek-R1-0528_671B_H20': 'm-DeepSeek-R1-0528'
+      'DeepSeek-R1-0528_671B_H20-3e': 'm-DeepSeek-R1-0528'
+      'DeepSeek-R1-0528_671B_PPU': 'm-DeepSeek-R1-0528'
+      'DeepSeek-R1_32B_H20': 'm-DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_H20-3e': 'm-DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_PPU': 'm-DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_70B_H20': 'm-DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_H20-3e': 'm-DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_PPU': 'm-DeepSeek-R1-Distill-Llama-70B'
+      'Qwen3-8B_PPU': 'm-qwen3-8b'
+      'Qwen3-14B_PPU': 'm-qwen3-14b'
+      'Qwen3-14B_L20': 'm-qwen3-14b'
+      'Qwen3-30B-A3B_PPU': 'm-qwen3-30b-a3b'
+      'Qwen3-30B-A3B-FP8_H20': 'm-qwen3-30b-a3b-fp8'
+      'Qwen3-32B-FP8_H20': 'm-qwen3-32b-fp8'
+      'DeepSeek-R1-Distill-Qwen-7B_PPU': 'm-DeepSeek-R1-Distill-Qwen-7B'
+      'DeepSeek-R1-0528-Qwen3-8B_PPU': 'm-DeepSeek-R1-0528-Qwen3-8B'
+      'DeepSeek-V3_PPU': 'm-DeepSeek-V3'
+      'Kimi-K2-Instruct_PPU': 'm-kimi-k2-instruct'
+    ModelNameMap:
+      'QwQ-32B_H20': 'Qwen/QwQ-32B'
+      #      'Qwen3-Embedding-8B_H20': 'Qwen/Qwen3-Embedding-8B'
+      #      'Qwen3-Embedding-8B_PPU': 'Qwen/Qwen3-Embedding-8B'
+      'Qwen3-32B_H20': 'Qwen/Qwen3-32B'
+      'Qwen3-32B_PPU': 'Qwen/Qwen3-32B'
+      'Qwen3-235B-A22B_H20': 'Qwen/Qwen3-235B-A22B'
+      'Qwen3-235B-A22B_PPU': 'Qwen/Qwen3-235B-A22B'
+      'Qwen3-235B-A22B-FP8_H20': 'Qwen/Qwen3-235B-A22B-FP8'
+      'Qwen2.5-7B-Instruct_PPU': 'Qwen/Qwen2.5-7B-Instruct'
+      'Qwen2.5-32B-Instruct_PPU': 'Qwen/Qwen2.5-32B-Instruct'
+      'Qwen2.5-72B-Instruct_PPU': 'Qwen/Qwen2.5-72B-Instruct'
+      'Qwen2.5-VL-7B-Instruct_PPU': 'Qwen/Qwen2.5-VL-7B-Instruct'
+      'Qwen2.5-VL-32B-Instruct_PPU': 'Qwen/Qwen2.5-VL-32B-Instruct'
+      'Qwen2.5-VL-72B-Instruct_PPU': 'Qwen/Qwen2.5-VL-72B-Instruct'
+      'DeepSeek-R1_671B_H20': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1_671B_H20-3e': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1_671B_PPU': 'deepseek-ai/DeepSeek-R1'
+      'DeepSeek-R1-0528_671B_H20': 'deepseek-ai/DeepSeek-R1-0528'
+      'DeepSeek-R1-0528_671B_H20-3e': 'deepseek-ai/DeepSeek-R1-0528'
+      'DeepSeek-R1-0528_671B_PPU': 'deepseek-ai/DeepSeek-R1-0528'
+      'DeepSeek-R1_32B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_32B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B'
+      'DeepSeek-R1_70B_H20': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_H20-3e': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+      'DeepSeek-R1_70B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B'
+      'Qwen3-8B_PPU': 'Qwen/Qwen3-8B'
+      'Qwen3-14B_PPU': 'Qwen/Qwen3-14B'
+      'Qwen3-14B_L20': 'Qwen/Qwen3-14B'
+      'Qwen3-30B-A3B_PPU': 'Qwen/Qwen3-30B-A3B'
+      'Qwen3-30B-A3B-FP8_H20': 'Qwen/Qwen3-30B-A3B-FP8'
+      'Qwen3-32B-FP8_H20': 'Qwen/Qwen3-32B-FP8'
+      'DeepSeek-R1-Distill-Qwen-7B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
+      'DeepSeek-R1-0528-Qwen3-8B_PPU': 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
+      'DeepSeek-V3_PPU': 'deepseek-ai/DeepSeek-V3'
+      'Kimi-K2-Instruct_PPU': 'moonshotai/Kimi-K2-Instruct'
+    ModelDiskSizeMap:
+      'QwQ-32B_H20': 170
+      #      'Qwen3-Embedding-8B_H20': 60
+      #      'Qwen3-Embedding-8B_PPU': 60
+      'Qwen3-32B_H20': 200
+      'Qwen3-32B_PPU': 200
+      'Qwen3-235B-A22B_H20': 1500
+      'Qwen3-235B-A22B_PPU': 1500
+      'Qwen3-235B-A22B-FP8_H20': 550
+      'Qwen2.5-7B-Instruct_PPU': 60
+      'Qwen2.5-32B-Instruct_PPU': 100
+      'Qwen2.5-72B-Instruct_PPU': 200
+      'Qwen2.5-VL-7B-Instruct_PPU': 60
+      'Qwen2.5-VL-32B-Instruct_PPU': 160
+      'Qwen2.5-VL-72B-Instruct_PPU': 350
+      'DeepSeek-R1_671B_H20': 1500
+      'DeepSeek-R1_671B_H20-3e': 1500
+      'DeepSeek-R1_671B_PPU': 1500
+      'DeepSeek-R1-0528_671B_H20': 800
+      'DeepSeek-R1-0528_671B_H20-3e': 800
+      'DeepSeek-R1-0528_671B_PPU': 800
+      'DeepSeek-R1_32B_H20': 170
+      'DeepSeek-R1_32B_H20-3e': 170
+      'DeepSeek-R1_32B_PPU': 170
+      'DeepSeek-R1_70B_H20': 300
+      'DeepSeek-R1_70B_H20-3e': 300
+      'DeepSeek-R1_70B_PPU': 300
+      'Qwen3-8B_PPU': 60
+      'Qwen3-14B_PPU': 100
+      'Qwen3-14B_L20': 100
+      'Qwen3-30B-A3B_PPU': 150
+      'Qwen3-30B-A3B-FP8_H20': 100
+      'Qwen3-32B-FP8_H20': 100
+      'DeepSeek-R1-Distill-Qwen-7B_PPU': 70
+      'DeepSeek-R1-0528-Qwen3-8B_PPU': 60
+      'DeepSeek-V3_PPU': 1500
+      'Kimi-K2-Instruct_PPU': 1500
+    DeploymentName:
+      'QwQ-32B_H20': 'qwq-32b'
+      #      'Qwen3-Embedding-8B_H20': 'qwen3'
+      #      'Qwen3-Embedding-8B_PPU': 'qwen3'
+      'Qwen3-32B_H20': 'qwen3'
+      'Qwen3-32B_PPU': 'qwen3'
+      'Qwen3-235B-A22B_H20': 'qwen3'
+      'Qwen3-235B-A22B_PPU': 'qwen3'
+      'Qwen3-235B-A22B-FP8_H20': 'qwen3'
+      'Qwen2.5-7B-Instruct_PPU': 'qwen25'
+      'Qwen2.5-32B-Instruct_PPU': 'qwen25'
+      'Qwen2.5-72B-Instruct_PPU': 'qwen25'
+      'Qwen2.5-VL-7B-Instruct_PPU': 'qwen-vl'
+      'Qwen2.5-VL-32B-Instruct_PPU': 'qwen-vl'
+      'Qwen2.5-VL-72B-Instruct_PPU': 'qwen-vl'
+      'DeepSeek-R1_671B_H20': 'deepseek-r1'
+      'DeepSeek-R1_671B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_671B_PPU': 'deepseek-r1'
+      'DeepSeek-R1-0528_671B_H20': 'deepseek-r1'
+      'DeepSeek-R1-0528_671B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1-0528_671B_PPU': 'deepseek-r1'
+      'DeepSeek-R1_32B_H20': 'deepseek-r1'
+      'DeepSeek-R1_32B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_32B_PPU': 'deepseek-r1'
+      'DeepSeek-R1_70B_H20': 'deepseek-r1'
+      'DeepSeek-R1_70B_H20-3e': 'deepseek-r1'
+      'DeepSeek-R1_70B_PPU': 'deepseek-r1'
+      'Qwen3-8B_PPU': 'qwen3'
+      'Qwen3-14B_PPU': 'qwen3'
+      'Qwen3-14B_L20': 'qwen3'
+      'Qwen3-30B-A3B_PPU': 'qwen3'
+      'Qwen3-30B-A3B-FP8_H20': 'qwen3'
+      'Qwen3-32B-FP8_H20': 'qwen3'
+      'DeepSeek-R1-Distill-Qwen-7B_PPU': 'deepseek-r1'
+      'DeepSeek-R1-0528-Qwen3-8B_PPU': 'deepseek-r1'
+      'DeepSeek-V3_PPU': 'deepseek-v3'
+      'Kimi-K2-Instruct_PPU': 'kimi-k2'
+    GPUModelMap:
+      'QwQ-32B_H20': 'H20'
+      #      'Qwen3-Embedding-8B_H20': 'H20'
+      #      'Qwen3-Embedding-8B_PPU': 'PPU810E'
+      'Qwen3-32B_H20': 'H20'
+      'Qwen3-32B_PPU': 'PPU810E'
+      'Qwen3-235B-A22B_H20': 'H20'
+      'Qwen3-235B-A22B_PPU': 'PPU810E'
+      'Qwen3-235B-A22B-FP8_H20': 'H20'
+      'Qwen2.5-7B-Instruct_PPU': 'PPU810E'
+      'Qwen2.5-32B-Instruct_PPU': 'PPU810E'
+      'Qwen2.5-72B-Instruct_PPU': 'PPU810E'
+      'Qwen2.5-VL-7B-Instruct_PPU': 'PPU810E'
+      'Qwen2.5-VL-32B-Instruct_PPU': 'PPU810E'
+      'Qwen2.5-VL-72B-Instruct_PPU': 'PPU810E'
+      'DeepSeek-R1_671B_H20': 'H20'
+      'DeepSeek-R1_671B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_671B_PPU': 'PPU810E'
+      'DeepSeek-R1-0528_671B_H20': 'H20'
+      'DeepSeek-R1-0528_671B_H20-3e': 'H20-3e'
+      'DeepSeek-R1-0528_671B_PPU': 'PPU810E'
+      'DeepSeek-R1_32B_H20': 'H20'
+      'DeepSeek-R1_32B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_32B_PPU': 'PPU810E'
+      'DeepSeek-R1_70B_H20': 'H20'
+      'DeepSeek-R1_70B_H20-3e': 'H20-3e'
+      'DeepSeek-R1_70B_PPU': 'PPU810E'
+      'Qwen3-8B_PPU': 'PPU810E'
+      'Qwen3-14B_PPU': 'PPU810E'
+      'Qwen3-14B_L20': 'L20'
+      'Qwen3-30B-A3B_PPU': 'PPU810E'
+      'Qwen3-30B-A3B-FP8_H20': 'H20'
+      'Qwen3-32B-FP8_H20': 'H20'
+      'DeepSeek-R1-Distill-Qwen-7B_PPU': 'PPU810E'
+      'DeepSeek-R1-0528-Qwen3-8B_PPU': 'PPU810E'
+      'DeepSeek-V3_PPU': 'PPU810E'
+      'Kimi-K2-Instruct_PPU': 'PPU810E'
+    PPU810E_CPUMap:
+      '1': 10
+      '2': 22
+      '4': 46
+      '8': 92
+      '16': 184
+    PPU810E_MemoryMap:
+      '1': 80
+      '2': 225
+      '4': 450
+      '8': 900
+      '16': 1800
+Outputs:
+  InstancePassword:
+    NoEcho: 'True'
+    Label:
+      en: Ecs Instance password
+      zh-cn: ECS实例密码
+    Description:
+      en: Initial instance password
+      zh-cn: ECS实例密码
+    Value:
+      Fn::GetAtt:
+        - RandomPassword
+        - value
+  ApiKey:
+    NoEcho: true
+    Label: "API Key"
+    Value:
+      Fn::Join:
+        - '-'
+        - - 'sk'
+          - Fn::GetAtt:
+              - RandomApiKey
+              - value
+  内网地址:
+    Label: 内网地址
+    Value:
+      Fn::Sub:
+        - 'http://${PrivateIp}:8000/v1/'
+        - PrivateIp:
+            Fn::GetAtt:
+              - PrivateIngressResources
+              - Response
+  公网地址:
+    Label: 公网地址
+    Condition: IsPublicEnabled
+    Value:
+      Fn::Sub:
+        - 'http://${PublicIp}:8000/v1/'
+        - PublicIp:
+            Fn::GetAtt:
+              - PublicIngressResources
+              - Response
+  Api调用示例:
+    Label: Api调用示例
+    Description: 通过以下命令发送HTTP请求即可访问推理服务，内网访问需保证在同一VPC下。
+    Value:
+      Fn::If:
+        - IsVLModel
+        - Fn::Sub:
+            - 'curl -X POST "http://${IP}:8000/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${VllmApiKey}" --data ''{ "stream": true, "model": "${ModelName}", "messages": [ { "role": "system", "content": "You are a helpful assistant." }, { "role": "user", "content": [ { "type": "image_url", "image_url": { "url": "https://modelscope.oss-cn-beijing.aliyuncs.com/resource/qwen.png" } }, { "type": "text", "text": "What is the text in the illustrate?" } ] } ] }'''
+            - IP:
+                Fn::If:
+                  - IsPublicEnabled
+                  - Fn::GetAtt:
+                      - PublicIngressResources
+                      - Response
+                  - Fn::GetAtt:
+                      - PrivateIngressResources
+                      - Response
+              VllmApiKey:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+        - Fn::Sub:
+            - 'curl -X POST "http://${IP}:8000/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer ${VllmApiKey}" --data ''{ "model": "${ModelName}", "stream": true, "messages": [ { "role": "user", "content": "Tell me the recipe for tea" } ] }'''
+            - IP:
+                Fn::If:
+                  - IsPublicEnabled
+                  - Fn::GetAtt:
+                      - PublicIngressResources
+                      - Response
+                  - Fn::GetAtt:
+                      - PrivateIngressResources
+                      - Response
+              VllmApiKey:
+                Fn::Join:
+                  - '-'
+                  - - 'sk'
+                    - Fn::GetAtt:
+                        - RandomApiKey
+                        - value
+  模型名称:
+    Label:
+      zh-ch: 模型名称
+      en: Model Name
+    Value:
+      Fn::FindInMap:
+        - ModelMapping
+        - ModelNameMap
+        - Ref: GPUType
+  Web应用:
+    Label:
+      zh-ch: Web应用
+      en: Web Application
+    Value: https://appflow.console.aliyun.com/vendor/cn-hangzhou/llm/chat?serviceInstanceId={{serviceInstanceId}}
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - WhitelistConfirmation
+        Label:
+          en: Whitelist Confirmation
+          zh-cn: 白名单确认
+      - Parameters:
+          - ModelType
+          - ModelName
+          - GPUType
+          - GPUAmount
+          - Replicas
+        Label:
+          en: Model Config
+          zh-cn: 模型配置
+      - Parameters:
+          - AcsZoneId
+          - EcsZoneId
+          - SupportPublicAccess
+        Label:
+          en: Basic Configuration
+          zh-cn: 资源配置
