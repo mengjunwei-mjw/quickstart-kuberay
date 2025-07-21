@@ -137,7 +137,7 @@ Parameters:
       ForceRadio: true
       AllowedValues:
         - Condition:
-            Fn::And:
+            Fn::Or:
               - Fn::Equals:
                   - 'DeepSeek-R1-0528-Qwen3-8B_PPU'
                   - ${GPUType}
@@ -147,11 +147,20 @@ Parameters:
               - Fn::Equals:
                   - 'DeepSeek-V3_PPU'
                   - ${GPUType}
+              - Fn::Equals:
+                  - 'Qwen2.5-VL-7B-Instruct_PPU'
+                  - ${GPUType}
+              - Fn::Equals:
+                  - 'Qwen2.5-VL-32B-Instruct_PPU'
+                  - ${GPUType}
+              - Fn::Equals:
+                  - 'Qwen2.5-VL-72B-Instruct_PPU'
+                  - ${GPUType}
           Value:
             - vLLM
         - Condition:
             Fn::Not:
-              Fn::And:
+              Fn::Or:
                 - Fn::Equals:
                     - 'DeepSeek-R1-0528-Qwen3-8B_PPU'
                     - ${GPUType}
@@ -160,6 +169,15 @@ Parameters:
                     - ${GPUType}
                 - Fn::Equals:
                     - 'DeepSeek-V3_PPU'
+                    - ${GPUType}
+                - Fn::Equals:
+                    - 'Qwen2.5-VL-7B-Instruct_PPU'
+                    - ${GPUType}
+                - Fn::Equals:
+                    - 'Qwen2.5-VL-32B-Instruct_PPU'
+                    - ${GPUType}
+                - Fn::Equals:
+                    - 'Qwen2.5-VL-72B-Instruct_PPU'
                     - ${GPUType}
           Value:
             - vLLM
@@ -1576,6 +1594,7 @@ Metadata:
       - Parameters:
           - ModelType
           - ModelName
+          - EngineType
           - GPUType
           - GPUAmount
           - Replicas
