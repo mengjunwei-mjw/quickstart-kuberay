@@ -1,0 +1,145 @@
+apiVersion: workloads.x-k8s.io/v1alpha1
+kind: RoleBasedGroup
+metadata:
+  name: lingjun-pd
+spec:
+  roles:
+    - name: scheduler
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            pd-disagg: scheduler
+            alibabacloud.com/inference-workload: "lingjun-pd" # 推荐与RoleBasedGroup.metadata.name相同
+            alibabacloud.com/inference-backend: "lingjun-pd" # 固定为lingjun-pd
+            alibabacloud.com/compute-class: performance
+            alibabacloud.com/fluid-sidecar-target: acs
+        spec:
+          volumes:
+            - name: model
+              persistentVolumeClaim:
+                claimName: llm-model
+          containers:
+            - name: scheduler
+              image: egslingjun-registry.cn-wulanchabu.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.06-dpd-scheduler-250625
+              command:
+                - sh
+                - -c
+                - /app/scheduler/scheduler --port=8008 --PD-mode=default --tokenizer-path=/models/Qwen2.5-72B-Instruct/tokenizer.json --enable-health-check=false --model-path=/models/Qwen2.5-72B-Instruct
+              ports:
+                - containerPort: 8008
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: "8"
+                  ephemeral-storage: 100Gi
+                  memory: 16Gi
+                requests:
+                  cpu: "8"
+                  ephemeral-storage: 100Gi
+                  memory: 16Gi
+              volumeMounts:
+                - name: model
+                  mountPath: /models
+      engineRuntimes:
+        - profileName: patio-runtime
+          containers:
+            - name: patio-runtime
+              env:
+                - name: INFERENCE_ENGINE_ENDPOINT
+                  value: http://localhost:8008
+
+    - name: worker
+      replicas: 4
+      template:
+        metadata:
+          labels:
+            alibabacloud.com/inference-workload: "lingjun-pd" # 推荐与RoleBasedGroup.metadata.name相同
+            alibabacloud.com/inference-backend: "lingjun-pd" # 固定为lingjun-pd
+            alibabacloud.com/compute-class: gpu
+            alibabacloud.com/gpu-model-series: H20
+            alibabacloud.com/fluid-sidecar-target: acs
+        spec:
+          volumes:
+            - name: model
+              persistentVolumeClaim:
+                claimName: llm-model
+            - name: shm
+              emptyDir:
+                medium: Memory
+                ## 需要跟Resources同步配置，建议配置 Resources Memory的一半
+                sizeLimit: 230Gi
+          containers:
+            - name: worker
+              image: acs-registry-vpc.cn-beijing.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.05-dpd-250527
+              # VLLM_USE_V1=0 vllm serve /models/Qwen2.5-72B-Instruct --port=8000 --disable-log-requests --enable-chunked-prefill --tensor-parallel-size=4 --no-enable-prefix-caching --max-model-len=8192
+              command:
+                - sh
+                - -c
+                - |
+                  VLLM_USE_V1=0 vllm serve /models/Qwen2.5-72B-Instruct --port=8000 --disable-log-requests --no-enable-chunked-prefill --tensor-parallel-size=4 --no-enable-prefix-caching --max-model-len=8192
+              resources:
+                limits:
+                  nvidia.com/gpu: 4
+                  cpu: "64"
+                  memory: 460Gi
+                requests:
+                  nvidia.com/gpu: 4
+                  cpu: "64"
+                  memory: 460Gi
+              volumeMounts:
+                - name: model
+                  mountPath: /models/
+                - name: shm
+                  mountPath: /dev/shm
+              env:
+                - name: NCCL_SOCKET_IFNAME
+                  value: eth0
+                - name: GLOO_SOCKET_IFNAME
+                  value: eth0
+              ports:
+                - name: http
+                  containerPort: 8000
+      engineRuntimes:
+        - profileName: patio-runtime
+          containers:
+            - name: patio-runtime
+              env:
+                - name: INFERENCE_ENGINE_ENDPOINT
+                  value: http://localhost:8000
+                - name: TOPO_COLLECTOR_ENDPOINT
+                  ## lingjun-pd 是rbg的名字，需要根据实际部署来修改
+                  value: http://lingjun-pd-scheduler-0.lingjun-pd-scheduler:9091
+              args:
+                - --instance-info={"topo_type":"LingJun","data":{"port":8000}}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lingjun-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 8008
+      protocol: TCP
+  selector:
+    pd-disagg: scheduler
+  type: LoadBalancer
+---
+apiVersion: workloads.x-k8s.io/v1alpha1
+kind: ClusterEngineRuntimeProfile
+metadata:
+  name: patio-runtime
+spec:
+  volumes:
+    - emptyDir: {}
+      name: patio-group-config
+  containers:
+    - name: patio-runtime
+      image: registry-cn-hangzhou.ack.aliyuncs.com/dev/patio-runtime:v0.2.0
+      imagePullPolicy: Always
+      volumeMounts:
+        - name: patio-group-config
+          mountPath: /etc/patio

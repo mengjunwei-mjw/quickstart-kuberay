@@ -74,6 +74,12 @@ Conditions:
       - Fn::Equals:
           - Ref: GPUType
           - 'DeepSeek-V3_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Kimi-K2-Instruct_PPU'
+      - Fn::Equals:
+          - Ref: GPUType
+          - 'Kimi-Dev-72B_PPU'
   CreateNewOSS:
     Fn::Equals:
       - Ref: CreateOSS
@@ -194,6 +200,7 @@ Parameters:
       - Qwen-VL
       - QwQ
       - Deepseek
+      - Kimi
   ModelName:
     Type: String
     Label:
@@ -223,6 +230,8 @@ Parameters:
       - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
       - deepseek-ai/DeepSeek-R1-0528
       - deepseek-ai/DeepSeek-V3
+      - moonshotai/Kimi-Dev-72B
+      #- moonshotai/Kimi-K2-Instruct
     AssociationPropertyMetadata:
       AutoSelectFirst: true
       ForceRadio: true
@@ -249,6 +258,8 @@ Parameters:
         Qwen/Qwen3-8B: Qwen3-8B
         Qwen/Qwen3-14B: Qwen3-14B
         deepseek-ai/DeepSeek-V3: DeepSeek-V3
+        moonshotai/Kimi-Dev-72B: Kimi-Dev-72B
+        #moonshotai/Kimi-K2-Instruct: Kimi-K2-Instruct
       AllowedValues:
         - Condition:
             Fn::Equals:
@@ -297,6 +308,13 @@ Parameters:
             - deepseek-ai/DeepSeek-R1-0528
             - deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
             - deepseek-ai/DeepSeek-V3
+        - Condition:
+            Fn::Equals:
+              - 'Kimi'
+              - ${ModelType}
+          Value:
+            - moonshotai/Kimi-Dev-72B
+            #- moonshotai/Kimi-K2-Instruct
   GPUType:
     Type: String
     Label:
@@ -336,6 +354,8 @@ Parameters:
       - DeepSeek-R1-Distill-Qwen-7B_PPU
       - DeepSeek-R1-0528-Qwen3-8B_PPU
       - DeepSeek-V3_PPU
+      - Kimi-Dev-72B_PPU
+      - Kimi-K2-Instruct_PPU
     Default: QwQ-32B_H20
     AssociationPropertyMetadata:
       AutoSelectFirst: true
@@ -484,6 +504,18 @@ Parameters:
               - deepseek-ai/DeepSeek-V3
           Value:
             - DeepSeek-V3_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - moonshotai/Kimi-Dev-72B
+          Value:
+            - Kimi-Dev-72B_PPU
+        - Condition:
+            Fn::Equals:
+              - ${ModelName}
+              - moonshotai/Kimi-K2-Instruct
+          Value:
+            - Kimi-K2-Instruct_PPU
       ValueLabelMapping:
         QwQ-32B_H20: GU8TF
         Qwen3-32B_H20: GU8TF
@@ -518,6 +550,8 @@ Parameters:
         DeepSeek-R1-Distill-Qwen-7B_PPU: P16EN
         DeepSeek-R1-0528-Qwen3-8B_PPU: P16EN
         DeepSeek-V3_PPU: P16EN
+        Kimi-Dev-72B_PPU: P16EN
+        Kimi-K2-Instruct_PPU: P16EN
   GPUAmount:
     Type: String
     Label:
@@ -665,6 +699,9 @@ Parameters:
               - Fn::Equals:
                   - ${GPUType}
                   - DeepSeek-R1_70B_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Kimi-Dev-72B_PPU
           Value:
             - 2
             - 4
@@ -681,6 +718,9 @@ Parameters:
               - Fn::Equals:
                   - ${GPUType}
                   - DeepSeek-V3_PPU
+              - Fn::Equals:
+                  - ${GPUType}
+                  - Kimi-K2-Instruct_PPU
           Value:
             - 16
   WhitelistConfirmation:
@@ -1015,6 +1055,12 @@ Resources:
                 is_fp8_model="true"
             fi
             
+            # 是否为Kimi-K2-Instruct模型
+            is_kimi_k2_instruct_model="false"
+            if [[ "${model}" == "Kimi-K2-Instruct_PPU" ]]; then
+                is_kimi_k2_instruct_model="true"
+            fi
+            
             # 判断是否为vLLM引擎
             is_vllm_engine="false"
             if [[ "${engineType}" == "vLLM" ]]; then
@@ -1034,6 +1080,7 @@ Resources:
             is_vl_model: $is_vl_model
             is_fp8_model: $is_fp8_model
             is_deepseek_fp8_ppu_model: $is_deepseek_fp8_ppu_model
+            is_kimi_k2_instruct_model: $is_kimi_k2_instruct_model
             is_vllm_engine: $is_vllm_engine
             is_sglang_engine: $is_sglang_engine
             support_public_access: ${supportPublicAccess}
@@ -1330,6 +1377,8 @@ Mappings:
       'DeepSeek-R1-Distill-Qwen-7B_PPU': 'm-DeepSeek-R1-Distill-Qwen-7B'
       'DeepSeek-R1-0528-Qwen3-8B_PPU': 'm-DeepSeek-R1-0528-Qwen3-8B'
       'DeepSeek-V3_PPU': 'm-DeepSeek-V3'
+      'Kimi-Dev-72B_PPU': 'm-kimi-dev-72b'
+      'Kimi-K2-Instruct_PPU': 'm-kimi-k2-instruct'
     ModelNameMap:
       'QwQ-32B_H20': 'Qwen/QwQ-32B'
       'Qwen3-32B_H20': 'Qwen/Qwen3-32B'
@@ -1364,6 +1413,8 @@ Mappings:
       'DeepSeek-R1-Distill-Qwen-7B_PPU': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
       'DeepSeek-R1-0528-Qwen3-8B_PPU': 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
       'DeepSeek-V3_PPU': 'deepseek-ai/DeepSeek-V3'
+      'Kimi-Dev-72B_PPU': 'moonshotai/Kimi-Dev-72B'
+      'Kimi-K2-Instruct_PPU': 'moonshotai/Kimi-K2-Instruct'
     ModelDiskSizeMap:
       'QwQ-32B_H20': 200
       'Qwen3-32B_H20': 200
@@ -1398,6 +1449,8 @@ Mappings:
       'DeepSeek-R1-Distill-Qwen-7B_PPU': 80
       'DeepSeek-R1-0528-Qwen3-8B_PPU': 80
       'DeepSeek-V3_PPU': 1500
+      'Kimi-Dev-72B_PPU': 350
+      'Kimi-K2-Instruct_PPU': 1500
     DeploymentName:
       'QwQ-32B_H20': 'qwq-32b'
       'Qwen3-32B_H20': 'qwen3'
@@ -1432,6 +1485,8 @@ Mappings:
       'DeepSeek-R1-Distill-Qwen-7B_PPU': 'deepseek-r1'
       'DeepSeek-R1-0528-Qwen3-8B_PPU': 'deepseek-r1'
       'DeepSeek-V3_PPU': 'deepseek-v3'
+      'Kimi-Dev-72B_PPU': 'kimi-dev'
+      'Kimi-K2-Instruct_PPU': 'kimi-k2'
     GPUModelMap:
       'QwQ-32B_H20': 'H20'
       'Qwen3-32B_H20': 'H20'
@@ -1466,6 +1521,8 @@ Mappings:
       'DeepSeek-R1-Distill-Qwen-7B_PPU': 'PPU810E'
       'DeepSeek-R1-0528-Qwen3-8B_PPU': 'PPU810E'
       'DeepSeek-V3_PPU': 'PPU810E'
+      'Kimi-Dev-72B_PPU': 'PPU810E'
+      'Kimi-K2-Instruct_PPU': 'PPU810E'
     PPU810E_CPUMap:
       '1': 10
       '2': 22
