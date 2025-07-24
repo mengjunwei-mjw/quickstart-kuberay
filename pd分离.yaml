@@ -2,6 +2,7 @@ apiVersion: workloads.x-k8s.io/v1alpha1
 kind: RoleBasedGroup
 metadata:
   name: lingjun-pd
+  namespace: llm-model
 spec:
   roles:
     - name: scheduler
@@ -16,16 +17,16 @@ spec:
             alibabacloud.com/fluid-sidecar-target: acs
         spec:
           volumes:
-            - name: model
+            - name: llm-model
               persistentVolumeClaim:
                 claimName: llm-model
           containers:
             - name: scheduler
-              image: egslingjun-registry.cn-wulanchabu.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.06-dpd-scheduler-250625
+              image: egslingjun-registry.cn-wulanchabu.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.06-dpd-scheduler-250704
               command:
                 - sh
                 - -c
-                - /app/scheduler/scheduler --port=8008 --PD-mode=default --tokenizer-path=/models/Qwen2.5-72B-Instruct/tokenizer.json --enable-health-check=false --model-path=/models/Qwen2.5-72B-Instruct
+                - /app/scheduler/scheduler --port=8008 --PD-mode=default --tokenizer-path=/llm-model/Qwen/Qwen2.5-7B-Instruct/tokenizer.json --enable-health-check=false --model-path=/llm-model/Qwen/Qwen2.5-7B-Instruct
               ports:
                 - containerPort: 8008
                   name: http
@@ -40,8 +41,8 @@ spec:
                   ephemeral-storage: 100Gi
                   memory: 16Gi
               volumeMounts:
-                - name: model
-                  mountPath: /models
+                - name: llm-model
+                  mountPath: /llm-model/
       engineRuntimes:
         - profileName: patio-runtime
           containers:
@@ -49,9 +50,8 @@ spec:
               env:
                 - name: INFERENCE_ENGINE_ENDPOINT
                   value: http://localhost:8008
-
     - name: worker
-      replicas: 4
+      replicas: 2
       template:
         metadata:
           labels:
@@ -62,7 +62,7 @@ spec:
             alibabacloud.com/fluid-sidecar-target: acs
         spec:
           volumes:
-            - name: model
+            - name: llm-model
               persistentVolumeClaim:
                 claimName: llm-model
             - name: shm
@@ -72,13 +72,13 @@ spec:
                 sizeLimit: 230Gi
           containers:
             - name: worker
-              image: acs-registry-vpc.cn-beijing.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.05-dpd-250527
+              image: egslingjun-registry.cn-wulanchabu.cr.aliyuncs.com/egslingjun/training-nv-pytorch:25.05-dpd-250707
               # VLLM_USE_V1=0 vllm serve /models/Qwen2.5-72B-Instruct --port=8000 --disable-log-requests --enable-chunked-prefill --tensor-parallel-size=4 --no-enable-prefix-caching --max-model-len=8192
               command:
                 - sh
                 - -c
                 - |
-                  VLLM_USE_V1=0 vllm serve /models/Qwen2.5-72B-Instruct --port=8000 --disable-log-requests --no-enable-chunked-prefill --tensor-parallel-size=4 --no-enable-prefix-caching --max-model-len=8192
+                  VLLM_USE_V1=0 vllm serve /llm-model/Qwen/Qwen2.5-7B-Instruct --served-model-name Qwen/Qwen2.5-7B-Instruct --trust-remote-code --port=8000 --disable-log-requests --no-enable-chunked-prefill --tensor-parallel-size=4 --no-enable-prefix-caching --max-model-len=8192
               resources:
                 limits:
                   nvidia.com/gpu: 4
@@ -89,8 +89,8 @@ spec:
                   cpu: "64"
                   memory: 460Gi
               volumeMounts:
-                - name: model
-                  mountPath: /models/
+                - name: llm-model
+                  mountPath: /llm-model/
                 - name: shm
                   mountPath: /dev/shm
               env:
@@ -119,6 +119,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: lingjun-service
+  namespace: llm-model
 spec:
   ports:
     - port: 80
@@ -132,6 +133,7 @@ apiVersion: workloads.x-k8s.io/v1alpha1
 kind: ClusterEngineRuntimeProfile
 metadata:
   name: patio-runtime
+  namespace: llm-model
 spec:
   volumes:
     - emptyDir: {}

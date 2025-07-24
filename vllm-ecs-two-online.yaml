@@ -5,12 +5,12 @@ Description:
 Mappings:
   ModelMap:
     deepseek-ai/DeepSeek-R1:
-      SystemDiskSize: 1500
+      SystemDiskSize: 1450
       MaxModelLen: 32768
       VllmVersion: 0.8.5
       GpuMemory: 0.95
       ECSImage: deepseek_r1_671b
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       SGVersion: 0.4.6.post1
       SGMemFraction: 0.95
       SGMaxTotalTokens: 32768
@@ -19,12 +19,12 @@ Mappings:
       PP: 1
       WaitTime: 3600
     deepseek-ai/DeepSeek-V3:
-      SystemDiskSize: 1500
+      SystemDiskSize: 1450
       MaxModelLen: 12784
       ECSImage: deepseek_v3
       VllmVersion: 0.8.5
       GpuMemory: 0.95
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       SGVersion: 0.4.6.post1
       SGMemFraction: 0.95
       SGMaxTotalTokens: 12784
@@ -33,12 +33,12 @@ Mappings:
       PP: 1
       WaitTime: 3600
     deepseek-ai/DeepSeek-R1-0528:
-      SystemDiskSize: 1000
+      SystemDiskSize: 1450
       MaxModelLen: 32768
       ECSImage: deepseek_r1_0528
       VllmVersion: 0.8.5
       GpuMemory: 0.95
-      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.7.2-sglang0.4.3.post2-pytorch2.5-cuda12.4-20250224
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       SGVersion: 0.4.6.post1
       SGMemFraction: 0.95
       SGMaxTotalTokens: 32768
@@ -52,6 +52,21 @@ Mappings:
       ECSImage: kimi_k2_instruct
       VllmVersion: 0.9.2
       GpuMemory: 0.95
+      DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
+      SGVersion: 0.4.6.post1
+      SGMemFraction: 0.95
+      SGMaxTotalTokens: 32768
+      SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
+      TP: 16
+      PP: 1
+      WaitTime: 7200
+    Qwen/Qwen3-Coder-480B-A35B-Instruct:
+      SystemDiskSize: 2000
+      MaxModelLen: 32768
+      ECSImage: qwen3_coder_480b
+      VllmVersion: 0.9.2
+      GpuMemory: 0.95
+      Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
       SGVersion: 0.4.6.post1
       SGMemFraction: 0.95
@@ -76,6 +91,13 @@ Conditions:
           - ModelMap
           - Ref: ModelName
           - VllmVersion
+  SGLangVersionConditions:
+    Fn::Equals:
+      - 0.4.6.post1
+      - Fn::FindInMap:
+          - ModelMap
+          - Ref: ModelName
+          - SGVersion
   PPConditions:
     Fn::Equals:
       - 1
@@ -87,6 +109,10 @@ Conditions:
     Fn::Equals:
       - "Kimi"
       - Ref: ModelType
+  IsVLLM:
+    Fn::Equals:
+      - 'vLLM'
+      - Ref: EngineType
 Parameters:
   PublicAccessOption:
     Type: Boolean
@@ -206,6 +232,33 @@ Parameters:
             Fn::Equals:
               - ${PayType}
               - PostPaid
+  EngineType:
+    Type: String
+    Label:
+      en: Engine Type
+      zh-cn: 部署方式
+    Default: "vLLM"
+    AllowedValues:
+      - vLLM
+      - SGLang
+    AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      ForceRadio: true
+      AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
+              - ${ModelName}
+          Value:
+            - vLLM
+        - Condition:
+            Fn::Not:
+              Fn::Equals:
+                - 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
+                - ${ModelName}
+          Value:
+            - vLLM
+            - SGLang
   ModelType:
     Type: String
     Label:
@@ -213,6 +266,7 @@ Parameters:
       zh-cn: 模型系列
     Default: "Deepseek"
     AllowedValues:
+      - Qwen3
       - Deepseek
       - Kimi
   ModelName:
@@ -222,12 +276,21 @@ Parameters:
       zh-cn: 模型名称
     Default: "deepseek-ai/DeepSeek-R1-0528"
     AllowedValues:
+      - Qwen/Qwen3-Coder-480B-A35B-Instruct
       - deepseek-ai/DeepSeek-R1-0528
       - deepseek-ai/DeepSeek-R1
       - deepseek-ai/DeepSeek-V3
       - moonshotai/Kimi-K2-Instruct
     AssociationPropertyMetadata:
+      AutoSelectFirst: true
+      ForceRadio: true
       AllowedValues:
+        - Condition:
+            Fn::Equals:
+              - 'Qwen3'
+              - ${ModelType}
+          Value:
+            - Qwen/Qwen3-Coder-480B-A35B-Instruct
         - Condition:
             Fn::Equals:
               - 'Deepseek'
@@ -518,33 +581,73 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            docker run -t -d \
-            --entrypoint /bin/bash \
-            --name=vllm \
-            --ipc=host \
-            --cap-add=SYS_PTRACE \
-            --network=host \
-            --gpus all \
-            --privileged \
-            --ulimit memlock=-1 \
-            --ulimit stack=67108864 \
-            -v /root:/root \
-            ${DockerImage} \
-            -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
-            export NCCL_DEBUG=INFO &&
-            export NCCL_NET_GDR_LEVEL=5 &&
-            export NCCL_P2P_LEVEL=5 &&
-            export NCCL_IB_GID_INDEX=1 &&
-            export GLOO_SOCKET_IFNAME=eth0 && 
-            export NCCL_SOCKET_IFNAME=eth0 && 
-            ray start --head --dashboard-host 0.0.0.0 --port=6379 && 
-            tail -f /dev/null"
+            if [ "${EngineType}" == "vLLM" ]; then
+              docker run -t -d \
+              --entrypoint /bin/bash \
+              --name=vllm \
+              --ipc=host \
+              --cap-add=SYS_PTRACE \
+              --network=host \
+              --gpus all \
+              --privileged \
+              --ulimit memlock=-1 \
+              --ulimit stack=67108864 \
+              -v /root:/root \
+              ${DockerImage} \
+              -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
+              export NCCL_DEBUG=INFO &&
+              export NCCL_NET_GDR_LEVEL=5 &&
+              export NCCL_P2P_LEVEL=5 &&
+              export NCCL_IB_GID_INDEX=1 &&
+              export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 && 
+              ray start --head --dashboard-host 0.0.0.0 --port=6379 && 
+              tail -f /dev/null"
+            elif [ "${EngineType}" == "SGLang" ]; then
+              docker run -t -d \
+              --entrypoint /bin/bash \
+              --name=sglang \
+              --ipc=host \
+              --cap-add=SYS_PTRACE \
+              --network=host \
+              --gpus all \
+              --privileged \
+              --ulimit memlock=-1 \
+              --ulimit stack=67108864 \
+              -v /root:/root \
+              ${SGDockerImage} \
+              -c "${InstallBlobfile}${InstallSGLang}export NCCL_IB_DISABLE=0 &&
+              export NCCL_DEBUG=INFO &&
+              export NCCL_NET_GDR_LEVEL=5 &&
+              export NCCL_P2P_LEVEL=5 &&
+              export NCCL_IB_GID_INDEX=1 &&
+              export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 && 
+              python3 -m sglang.launch_server \
+              --model-path /root/llm-model/${ModelName} \
+              --served-model-name ${ModelName} \
+              --tp 16 \
+              --dist-init-addr ${HEAD_NODE_ADDRESS}:50000 --nnodes 2 --node-rank 0 \
+              --trust-remote-code \
+              --host 0.0.0.0 \
+              --port 8000 \
+              --mem-fraction-static ${SGMemFraction} \
+              --api-key "${API_KEY}" \
+              --max-total-tokens ${SGMaxTotalTokens}"
+            fi
           - HEAD_NODE_ADDRESS:
               Fn::Select:
                 - '0'
                 - Fn::GetAtt:
                     - MasterInstanceGroup
                     - PrivateIps
+            API_KEY:
+              Fn::Join:
+                - '-'
+                - - 'sk'
+                  - Fn::GetAtt:
+                      - RandomApiKey
+                      - value
             InstallVllm:
               Fn::If:
                 - VllmVersionConditions
@@ -556,11 +659,39 @@ Resources:
                           - ModelMap
                           - Ref: ModelName
                           - VllmVersion
+            InstallSGLang:
+              Fn::If:
+                - SGLangVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade sglang==${SGVersion} && '
+                    - SGVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - SGVersion
             DockerImage:
               Fn::FindInMap:
                 - ModelMap
                 - Ref: ModelName
                 - DockerImage
+            EngineType:
+              Ref: EngineType
+            SGDockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGDockerImage
+            SGMemFraction:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMemFraction
+            SGMaxTotalTokens:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMaxTotalTokens
             InstallBlobfile:
               Fn::If:
                 - IsKimi
@@ -582,36 +713,69 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
-            docker run -t -d \
-            --entrypoint /bin/bash \
-            --name=vllm \
-            --ipc=host \
-            --cap-add=SYS_PTRACE \
-            --network=host \
-            --gpus all \
-            --privileged \
-            --ulimit memlock=-1 \
-            --ulimit stack=67108864 \
-            -v /root:/root \
-            ${DockerImage} \
-            -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
-            export NCCL_DEBUG=INFO &&
-            export NCCL_NET_GDR_LEVEL=5 &&
-            export NCCL_P2P_LEVEL=5 &&
-            export NCCL_IB_GID_INDEX=1 &&
-            export GLOO_SOCKET_IFNAME=eth0 && 
-            export NCCL_SOCKET_IFNAME=eth0 && 
-            ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
-            vllm serve /root/llm-model/${ModelName} \
-            --served-model-name ${ModelName} \
-            --gpu-memory-utilization ${GpuMemory} \
-            --max-model-len ${MaxModelLen} \
-            --enable-chunked-prefill \
-            --host=0.0.0.0 \
-            --port 8000 \
-            --trust-remote-code \
-            --api-key "${API_KEY}" \
-            --tensor-parallel-size ${TP}${PP}"
+            if [ "${EngineType}" == "vLLM" ]; then
+              docker run -t -d \
+              --entrypoint /bin/bash \
+              --name=vllm \
+              --ipc=host \
+              --cap-add=SYS_PTRACE \
+              --network=host \
+              --gpus all \
+              --privileged \
+              --ulimit memlock=-1 \
+              --ulimit stack=67108864 \
+              -v /root:/root \
+              ${DockerImage} \
+              -c "${InstallBlobfile}${InstallVllm}export NCCL_IB_DISABLE=0 &&
+              export NCCL_DEBUG=INFO &&
+              export NCCL_NET_GDR_LEVEL=5 &&
+              export NCCL_P2P_LEVEL=5 &&
+              export NCCL_IB_GID_INDEX=1 &&
+              export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 && 
+              ray start --address='${HEAD_NODE_ADDRESS}:6379' && 
+              vllm serve /root/llm-model/${ModelName} \
+              --served-model-name ${ModelName} \
+              --gpu-memory-utilization ${GpuMemory} \
+              --max-model-len ${MaxModelLen} \
+              --enable-chunked-prefill \
+              --host=0.0.0.0 \
+              --port 8000 \
+              --trust-remote-code \
+              --api-key "${API_KEY}" \
+              --tensor-parallel-size ${TP}${PP}"
+            elif [ "${EngineType}" == "SGLang" ]; then
+              docker run -t -d \
+              --entrypoint /bin/bash \
+              --name=sglang \
+              --ipc=host \
+              --cap-add=SYS_PTRACE \
+              --network=host \
+              --gpus all \
+              --privileged \
+              --ulimit memlock=-1 \
+              --ulimit stack=67108864 \
+              -v /root:/root \
+              ${SGDockerImage} \
+              -c "${InstallBlobfile}${InstallSGLang}export NCCL_IB_DISABLE=0 &&
+              export NCCL_DEBUG=INFO &&
+              export NCCL_NET_GDR_LEVEL=5 &&
+              export NCCL_P2P_LEVEL=5 &&
+              export NCCL_IB_GID_INDEX=1 &&
+              export GLOO_SOCKET_IFNAME=eth0 && 
+              export NCCL_SOCKET_IFNAME=eth0 && 
+              python3 -m sglang.launch_server \
+              --model-path /root/llm-model/${ModelName} \
+              --served-model-name ${ModelName} \
+              --tp 16 \
+              --dist-init-addr ${HEAD_NODE_ADDRESS}:50000 --nnodes 2 --node-rank 1 \
+              --trust-remote-code \
+              --host 0.0.0.0 \
+              --port 8000 \
+              --mem-fraction-static ${SGMemFraction} \
+              --api-key "${API_KEY}" \
+              --max-total-tokens ${SGMaxTotalTokens}"
+            fi
             
             MAX_TIMEOUT=${WaitTime}
             INTERVAL=30
@@ -619,7 +783,7 @@ Resources:
 
             for ((i=1; i<=MAX_ATTEMPTS; i++))
             do
-                LATEST_LOG=$(docker logs vllm 2>&1 | tail -n 200)
+                LATEST_LOG=$(docker logs ${Name} 2>&1 | tail -n 300)
                 if echo "$LATEST_LOG" | grep -q "Application startup complete."
                 then
                     exit 0
@@ -660,6 +824,17 @@ Resources:
                           - ModelMap
                           - Ref: ModelName
                           - VllmVersion
+            InstallSGLang:
+              Fn::If:
+                - SGLangVersionConditions
+                - ''
+                - Fn::Sub:
+                    - 'pip install --upgrade sglang==${SGVersion} && '
+                    - SGVersion:
+                        Fn::FindInMap:
+                          - ModelMap
+                          - Ref: ModelName
+                          - SGVersion
             GpuMemory:
               Fn::FindInMap:
                 - ModelMap
@@ -670,6 +845,28 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - DockerImage
+            Name:
+              Fn::If:
+                - IsVLLM
+                - 'vllm'
+                - 'sglang'
+            EngineType:
+              Ref: EngineType
+            SGDockerImage:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGDockerImage
+            SGMemFraction:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMemFraction
+            SGMaxTotalTokens:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - SGMaxTotalTokens
             WaitTime:
               Fn::FindInMap:
                 - ModelMap
@@ -723,21 +920,8 @@ Outputs:
       zh-ch: 内网地址
       en: Internal Address
     Value:
-      Fn::Sub:
-        - 'http://${Endpoint}:8000/v1'
-        - Endpoint:
-            Fn::Select:
-              - '0'
-              - Fn::GetAtt:
-                  - WorkerInstanceGroup
-                  - PrivateIps
-  公网地址:
-    Label:
-      zh-ch: 公网地址
-      en: Public Address
-    Value:
       Fn::If:
-        - PublicAccessConditions
+        - IsVLLM
         - Fn::Sub:
             - 'http://${Endpoint}:8000/v1'
             - Endpoint:
@@ -745,7 +929,40 @@ Outputs:
                   - '0'
                   - Fn::GetAtt:
                       - WorkerInstanceGroup
-                      - PublicIps
+                      - PrivateIps
+        - Fn::Sub:
+            - 'http://${Endpoint}:8000/v1'
+            - Endpoint:
+                Fn::Select:
+                  - '0'
+                  - Fn::GetAtt:
+                      - MasterInstanceGroup
+                      - PrivateIps
+  公网地址:
+    Label:
+      zh-ch: 公网地址
+      en: Public Address
+    Value:
+      Fn::If:
+        - PublicAccessConditions
+        - Fn::If:
+            - IsVLLM
+            - Fn::Sub:
+                - 'http://${Endpoint}:8000/v1'
+                - Endpoint:
+                    Fn::Select:
+                      - '0'
+                      - Fn::GetAtt:
+                          - WorkerInstanceGroup
+                          - PublicIps
+            - Fn::Sub:
+                - 'http://${Endpoint}:8000/v1'
+                - Endpoint:
+                    Fn::Select:
+                      - '0'
+                      - Fn::GetAtt:
+                          - MasterInstanceGroup
+                          - PublicIps
         - Fn::Select:
             - '0'
             - Fn::GetAtt:
@@ -783,22 +1000,42 @@ Outputs:
           ApiServiceIp:
             Fn::If:
               - PublicAccessConditions
-              - Fn::Sub:
-                  - 'http://${Endpoint}:8000/v1'
-                  - Endpoint:
-                      Fn::Select:
-                        - '0'
-                        - Fn::GetAtt:
-                            - WorkerInstanceGroup
-                            - PublicIps
-              - Fn::Sub:
-                  - 'http://${Endpoint}:8000/v1'
-                  - Endpoint:
-                      Fn::Select:
-                        - '0'
-                        - Fn::GetAtt:
-                            - WorkerInstanceGroup
-                            - PrivateIps
+              - Fn::If:
+                  - IsVLLM
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - WorkerInstanceGroup
+                                - PublicIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - MasterInstanceGroup
+                                - PublicIps
+              - Fn::If:
+                  - IsVLLM
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - WorkerInstanceGroup
+                                - PrivateIps
+                  - Fn::Sub:
+                      - 'http://${Endpoint}:8000/v1'
+                      - Endpoint:
+                          Fn::Select:
+                            - '0'
+                            - Fn::GetAtt:
+                                - MasterInstanceGroup
+                                - PrivateIps
 Metadata:
   ALIYUN::ROS::Interface:
     ParameterGroups:
@@ -810,6 +1047,7 @@ Metadata:
       - Parameters:
           - ModelType
           - ModelName
+          - EngineType
           - PayType
           - PayPeriodUnit
           - PayPeriod
