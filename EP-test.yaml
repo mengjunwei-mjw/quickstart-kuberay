@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-model
+  template:
+    metadata:
+      labels:
+        app: test-model
+        alibabacloud.com/fluid-sidecar-target: acs
+    spec:
+      volumes:
+        - name: llm-model-fluid
+          persistentVolumeClaim:
+            ## 上述配置的 Dataset 名字
+            claimName: llm-model-fluid
+      containers:
+        - name: centos
+          image: centos:7
+          command: ["/bin/sleep", "infinity"]
+          volumeMounts:
+            ## 模型在容器中的路径
+            - mountPath: /models/DeepSeek-R1
+              name: llm-model-fluid
