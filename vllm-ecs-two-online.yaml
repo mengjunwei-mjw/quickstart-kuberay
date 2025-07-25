@@ -15,8 +15,8 @@ Mappings:
       SGMemFraction: 0.95
       SGMaxTotalTokens: 32768
       SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
-      TP: 16
-      PP: 1
+      TP: 8
+      PP: 2
       WaitTime: 3600
     deepseek-ai/DeepSeek-V3:
       SystemDiskSize: 1450
@@ -29,8 +29,8 @@ Mappings:
       SGMemFraction: 0.95
       SGMaxTotalTokens: 12784
       SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
-      TP: 16
-      PP: 1
+      TP: 8
+      PP: 2
       WaitTime: 3600
     deepseek-ai/DeepSeek-R1-0528:
       SystemDiskSize: 1450
@@ -43,8 +43,8 @@ Mappings:
       SGMemFraction: 0.95
       SGMaxTotalTokens: 32768
       SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
-      TP: 16
-      PP: 1
+      TP: 8
+      PP: 2
       WaitTime: 3600
     moonshotai/Kimi-K2-Instruct:
       SystemDiskSize: 1500
@@ -68,7 +68,7 @@ Mappings:
       GpuMemory: 0.95
       Quantization: 16
       DockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/vllm:0.8.5-pytorch2.6-cu124-20250429
-      SGVersion: 0.4.6.post1
+      SGVersion: 0.4.9.post3
       SGMemFraction: 0.95
       SGMaxTotalTokens: 32768
       SGDockerImage: egs-registry.cn-hangzhou.cr.aliyuncs.com/egs/sglang:0.4.6.post1-pytorch2.6-cu124-20250429
@@ -113,6 +113,10 @@ Conditions:
     Fn::Equals:
       - 'vLLM'
       - Ref: EngineType
+  IsQwen3Coder:
+    Fn::Equals:
+      - 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
+      - Ref: ModelName
 Parameters:
   PublicAccessOption:
     Type: Boolean
@@ -241,24 +245,6 @@ Parameters:
     AllowedValues:
       - vLLM
       - SGLang
-    AssociationPropertyMetadata:
-      AutoSelectFirst: true
-      ForceRadio: true
-      AllowedValues:
-        - Condition:
-            Fn::Equals:
-              - 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
-              - ${ModelName}
-          Value:
-            - vLLM
-        - Condition:
-            Fn::Not:
-              Fn::Equals:
-                - 'Qwen/Qwen3-Coder-480B-A35B-Instruct'
-                - ${ModelName}
-          Value:
-            - vLLM
-            - SGLang
   ModelType:
     Type: String
     Label:
@@ -506,6 +492,8 @@ Resources:
           NetworkInterfaceTrafficMode: HighPerformance
           DeleteOnRelease: true
   WorkerInstanceGroup:
+    DependsOn:
+      - MasterInstanceGroup
     Type: ALIYUN::ECS::InstanceGroup
     Properties:
       InstanceName:
@@ -633,7 +621,24 @@ Resources:
               --port 8000 \
               --mem-fraction-static ${SGMemFraction} \
               --api-key "${API_KEY}" \
-              --max-total-tokens ${SGMaxTotalTokens}"
+              --max-total-tokens ${SGMaxTotalTokens}${SGQwen3CoderParam}"
+            
+              MAX_TIMEOUT=${WaitTime}
+              INTERVAL=30
+              MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
+            
+              for ((i=1; i<=MAX_ATTEMPTS; i++))
+              do
+                  LATEST_LOG=$(docker logs ${Name} 2>&1 | tail -n 300)
+                  if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                  then
+                      exit 0
+                  else
+                      sleep $INTERVAL
+                  fi
+              done
+              echo "Failed to start the application after $MAX_TIMEOUT seconds."
+              exit 1
             fi
           - HEAD_NODE_ADDRESS:
               Fn::Select:
@@ -664,7 +669,7 @@ Resources:
                 - SGLangVersionConditions
                 - ''
                 - Fn::Sub:
-                    - 'pip install --upgrade sglang==${SGVersion} && '
+                    - "pip install 'sglang[all]>=${SGVersion}' && "
                     - SGVersion:
                         Fn::FindInMap:
                           - ModelMap
@@ -692,15 +697,29 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - SGMaxTotalTokens
+            SGQwen3CoderParam:
+              Fn::If:
+                - IsQwen3Coder
+                - ' --tool-call-parser qwen3 --enable-ep-moe'
+                - ''
             InstallBlobfile:
               Fn::If:
                 - IsKimi
                 - 'pip install blobfile && '
                 - ''
+            WaitTime:
+              Fn::FindInMap:
+                - ModelMap
+                - Ref: ModelName
+                - WaitTime
+            Name:
+              Fn::If:
+                - IsVLLM
+                - 'vllm'
+                - 'sglang'
   WorkerRunInstallCommand:
     DependsOn:
       - WorkerInstanceGroup
-      - MasterRunInstallCommand
     Type: ALIYUN::ECS::RunCommand
     Properties:
       InstanceIds:
@@ -744,6 +763,23 @@ Resources:
               --trust-remote-code \
               --api-key "${API_KEY}" \
               --tensor-parallel-size ${TP}${PP}"
+              
+              MAX_TIMEOUT=${WaitTime}
+              INTERVAL=30
+              MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
+  
+              for ((i=1; i<=MAX_ATTEMPTS; i++))
+              do
+                  LATEST_LOG=$(docker logs ${Name} 2>&1 | tail -n 300)
+                  if echo "$LATEST_LOG" | grep -q "Application startup complete."
+                  then
+                      exit 0
+                  else
+                      sleep $INTERVAL
+                  fi
+              done
+              echo "Failed to start the application after $MAX_TIMEOUT seconds."
+              exit 1
             elif [ "${EngineType}" == "SGLang" ]; then
               docker run -t -d \
               --entrypoint /bin/bash \
@@ -774,25 +810,8 @@ Resources:
               --port 8000 \
               --mem-fraction-static ${SGMemFraction} \
               --api-key "${API_KEY}" \
-              --max-total-tokens ${SGMaxTotalTokens}"
+              --max-total-tokens ${SGMaxTotalTokens}${SGQwen3CoderParam}"
             fi
-            
-            MAX_TIMEOUT=${WaitTime}
-            INTERVAL=30
-            MAX_ATTEMPTS=$((MAX_TIMEOUT / INTERVAL))
-
-            for ((i=1; i<=MAX_ATTEMPTS; i++))
-            do
-                LATEST_LOG=$(docker logs ${Name} 2>&1 | tail -n 300)
-                if echo "$LATEST_LOG" | grep -q "Application startup complete."
-                then
-                    exit 0
-                else
-                    sleep $INTERVAL
-                fi
-            done
-            echo "Failed to start the application after $MAX_TIMEOUT seconds."
-            exit 1
           - ModelName:
               Ref: ModelName
             API_KEY:
@@ -829,7 +848,7 @@ Resources:
                 - SGLangVersionConditions
                 - ''
                 - Fn::Sub:
-                    - 'pip install --upgrade sglang==${SGVersion} && '
+                    - "pip install 'sglang[all]>=${SGVersion}' && "
                     - SGVersion:
                         Fn::FindInMap:
                           - ModelMap
@@ -867,6 +886,11 @@ Resources:
                 - ModelMap
                 - Ref: ModelName
                 - SGMaxTotalTokens
+            SGQwen3CoderParam:
+              Fn::If:
+                - IsQwen3Coder
+                - ' --tool-call-parser qwen3 --enable-ep-moe'
+                - ''
             WaitTime:
               Fn::FindInMap:
                 - ModelMap
